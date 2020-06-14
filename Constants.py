@@ -1,0 +1,15 @@
+
+PDB_PATH = '../data/'
+
+ATOM_DGL_ID = 'my_dgl_id'
+LABEL_ATTRIBUTE_NAME = 'my_label'
+LABEL_ATOM_DISTANCE = 4.2
+
+LABEL_NODE_NAME = 'label'
+LABEL_POSITIVE_COLOR = 'r'
+LABEL_NEGATIVE_COLOR = 'b'
+
+NODE_FEATURES_NAME = 'features'
+NODE_FEATURES_NUM = 6
+EDGE_FEATURE_NAME = 'relative_position'
+EDGE_FEATURE_NUM = 4
