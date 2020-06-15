@@ -2,12 +2,21 @@ from Bio.PDB import Atom
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-# import matplotlib as mpl
+import matplotlib as mpl
+from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR
+from Data import my_pdb_parser
+from Preprocess import get_dgl_id
 
 
-def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None):
+def use_new_window():
+    mpl.use('Qt5Agg')
+
+
+def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None, title=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
+    if title is not None:
+        ax.set_title(title)  # , loc='left')
     if pairs:
         for pair in pairs:
             a1, a2 = pair
@@ -43,9 +52,20 @@ def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None):
 
 
 def plot_from_file(filename, color_func):
-    from Data import my_pdb_parser
-    G, atoms, pairs, labels = my_pdb_parser(filename, do_plot=False)
-    plot_graph(pairs=pairs, atoms=atoms, atom_color_func=color_func)
+    G, atoms, pairs, labels = my_pdb_parser(filename)
+    plot_graph(pairs=pairs, atoms=atoms, atom_color_func=color_func, title=filename)
 
-# TODO: plot_predicted_graph
 
+def plot_predicted(filename, model):
+    G, atoms, pairs, labels = my_pdb_parser(filename)
+    logits = model(G)
+
+    def get_predicted_color(atom):
+        dgl_id = get_dgl_id(atom)
+        pred = logits[dgl_id].detach().numpy()
+        cls = pred.argmax()
+        if cls == 1:
+            return LABEL_POSITIVE_COLOR
+        return LABEL_NEGATIVE_COLOR
+
+    plot_graph(pairs=pairs, atoms=atoms, atom_color_func=get_predicted_color, title=filename)

@@ -23,6 +23,9 @@ class GNNModel:
         self.epochs = epochs
         self.batch_size = batch_size
 
+    def __call__(self, graph):
+        return self.net(graph)
+
     @staticmethod
     def batcher(device):
         def batcher_dev(batch):
