@@ -1,3 +1,5 @@
+import typing
+
 import torch
 import torch.nn.functional as F
 from dgl.nn.pytorch import GraphConv
@@ -31,6 +33,9 @@ class Net(nn.Module):
         self.last_layer = GraphConv(prev_hidden, num_classes)
 
         self.dropout = nn.Dropout(p=dropout_p)
+
+    def __call__(self, *input, **kwargs) -> typing.Any:
+        return super().__call__(*input, **kwargs)
 
     def forward(self, g, features=None):
         edge_h = F.relu(self.edge_layer(g, features))

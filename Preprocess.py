@@ -1,3 +1,5 @@
+import json
+
 import dgl
 import torch
 from Bio.PDB import PPBuilder, NeighborSearch
@@ -246,6 +248,11 @@ def transform_node_features(features_list):
             result[j, col] = node_feat_word_to_ixs[col][word]
 
     return torch.from_numpy(result).to(dtype=torch.float32)
+
+
+def save_feat_word_to_ixs():
+    with open('data.json', 'w') as fp:
+        json.dump(node_feat_word_to_ixs, fp)
 
 
 def create_dgl_graph(pairs, num_nodes, set_edge_features=False, node_features=None, labels=None):

@@ -1,5 +1,7 @@
 
-PDB_PATH = '../data/'
+DATA_PATH = 'data/'
+SAVED_GRAPHS_FILE_PATH = DATA_PATH + 'preprocessed_data/' + 'graph_data.bin'
+PDB_PATH = DATA_PATH + 'pdbs/'
 
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
