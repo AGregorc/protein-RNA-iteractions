@@ -14,8 +14,9 @@ GCNBatch = namedtuple('GCNBatch', ['graph', 'labels'])
 
 
 class GNNModel(GeneralModel):
-    def __init__(self, device=None, dropout=0.5):
-        self.net = Net(hidden_sizes=[8, 16, 10, 8, 4], dropout_p=dropout)
+    def __init__(self, net, device=None):
+        # self.net = Net(hidden_sizes=[8, 16, 10, 8, 4], dropout_p=dropout)
+        self.net = net
         print(self.net)
 
         if device is None:
@@ -82,6 +83,7 @@ class GNNModel(GeneralModel):
 
         with torch.no_grad():
             for g in dataset:
+                g = g.to(self.device)
                 logits = self.net(g)
                 result = torch.cat((result, logits.cpu()), 0)
         return result

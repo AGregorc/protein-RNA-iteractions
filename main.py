@@ -1,50 +1,28 @@
 import torch
+from sklearn.model_selection import train_test_split
 
 import Constants
 from Data import create_dataset, load_dataset, save_dataset, get_dataset
 from Evaluate import calculate_metrics
 from GNN.GNNModel import GNNModel
+from GNN.Net import Net
 from PlotMPL import plot_from_file, plot_predicted, use_new_window
 from Preprocess import get_labeled_color, save_feat_word_to_ixs
 
-dataset, dataset_filenames = get_dataset(limit=3)
+dataset, dataset_filenames = get_dataset(limit=50)
 save_dataset(dataset, dataset_filenames)
-dataset, dataset_filenames = load_dataset()
+# dataset, dataset_filenames = load_dataset()
+train_d, test_d, train_f, test_f = train_test_split(dataset, dataset_filenames, test_size=0.3)
+del dataset, dataset_filenames
 
-# save_feat_word_to_ixs()
-
-
-def split_dataset(data, data_filenames, pos_neg_ratio=0.14):
-    interactions_percentages = []
-    for graph in data:
-        positives = torch.sum((graph.ndata[Constants.LABEL_NODE_NAME] == Constants.LABEL_POSITIVE).int())
-        interactions_percentages.append(positives.item() / graph.ndata[Constants.LABEL_NODE_NAME].shape[0])
-
-    sorted_data = sorted(zip(interactions_percentages, data, data_filenames), reverse=True)
-    interactions_percentages, data, data_filenames = list(zip(*sorted_data))
-
-    split_index = int(len(data) / 2)
-    for i, p in enumerate(interactions_percentages):
-        if p < pos_neg_ratio:
-            split_index = i
-            break
-    train_dataset_1 = data[:split_index]
-    train_filenames_1 = data_filenames[:split_index]
-    print(f'Split index: {split_index}')
-
-    train_dataset_2 = data[split_index:]
-    train_filenames_2 = data_filenames[split_index:]
-
-    return train_dataset_1, train_filenames_1, train_dataset_2, train_filenames_2
-
-
-my_model = GNNModel()
+net = Net(hidden_sizes=[16, 32, 64, 32, 16, 8], dropout_p=0.5)
+my_model = GNNModel(net)
 
 # my_model.train(train_dataset_1)
 # my_model.train(train_dataset_2)
-my_model.train(dataset)
+my_model.train(train_d, loss_weights=[1.0, 5.5], batch_size=15, epochs=10)
 
-calculate_metrics(dataset, my_model, my_model.get_name())
+calculate_metrics(test_d, my_model, my_model.get_name())
 
 # use_new_window()
 #

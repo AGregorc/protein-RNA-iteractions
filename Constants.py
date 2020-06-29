@@ -1,6 +1,7 @@
 
 DATA_PATH = 'data/'
-SAVED_GRAPHS_FILE_PATH = DATA_PATH + 'preprocessed_data/' + 'graph_data.bin'
+SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
+SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
 
 ATOM_DGL_ID = 'my_dgl_id'

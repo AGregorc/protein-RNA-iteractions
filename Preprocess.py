@@ -134,8 +134,8 @@ def node_features(atom):
         atom.bfactor,
         atom.occupancy,
         atom.element,
-        atom.fullname,              # string
-        atom.get_parent().resname   # string
+        atom.fullname,  # string
+        atom.get_parent().resname,  # string
     ]
 
     Constants.NODE_FEATURES_NUM = len(features)
@@ -192,8 +192,8 @@ def get_edge_features(atom1, atom2):
     :return: edge features
     """
     result = np.zeros(Constants.EDGE_FEATURE_NUM)
-        # TODO: mera podobnosti, ki je invariantna na translacijo in rotacijo proteina
-        # Predlog: razdalja do centra proteina/ogljika alpha oz podobno
+    # TODO: mera podobnosti, ki je invariantna na translacijo in rotacijo proteina
+    # Predlog: razdalja do centra proteina/ogljika alpha oz podobno
     vec = atom2.get_coord() - atom1.get_coord()
     norm = np.linalg.norm(vec)
     result[:3] = vec / norm
@@ -217,6 +217,20 @@ def change_direction_features(np_array):
 
 node_feat_word_to_ixs = {}
 node_feat_wti_lens = {}
+
+
+def save_feat_word_to_ixs(filename):
+    with open(filename+'.json', 'w') as fp:
+        json.dump(node_feat_word_to_ixs, fp)
+
+
+def load_feat_word_to_ixs(filename):
+    global node_feat_word_to_ixs, node_feat_wti_lens
+    with open(filename+'.json', 'r') as fp:
+        node_feat_word_to_ixs = json.load(fp)
+    node_feat_wti_lens = {}
+    for col in node_feat_word_to_ixs:
+        node_feat_wti_lens[col] = len(node_feat_word_to_ixs[col])
 
 
 def transform_node_features(features_list):
@@ -248,11 +262,6 @@ def transform_node_features(features_list):
             result[j, col] = node_feat_word_to_ixs[col][word]
 
     return torch.from_numpy(result).to(dtype=torch.float32)
-
-
-def save_feat_word_to_ixs():
-    with open('data.json', 'w') as fp:
-        json.dump(node_feat_word_to_ixs, fp)
 
 
 def create_dgl_graph(pairs, num_nodes, set_edge_features=False, node_features=None, labels=None):
