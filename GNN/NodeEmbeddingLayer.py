@@ -12,7 +12,7 @@ class NodeEmbeddingLayer(nn.Module):
         if vocab_sizes is None:
             vocab_sizes = get_feat_wti_lens()
 
-        self.numerical_cols = [i for i in range(in_feats) if str(i) not in vocab_sizes.keys()]
+        self.numerical_cols = [i for i in range(in_feats) if i not in vocab_sizes.keys()]
         self.col_to_embedding = {}
         self.emb_size = in_feats
         for col, vocab_size in vocab_sizes.items():

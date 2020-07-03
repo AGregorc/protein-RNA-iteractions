@@ -7,7 +7,7 @@ from Constants import LABEL_NODE_NAME
 from GNN import GeneralModel
 
 
-def calculate_metrics(dataset: list, model: GeneralModel, print_model_name: str):
+def calculate_metrics(dataset: list, model, print_model_name: str):
     """
         Final metrics to compare different models
     :param dataset: list of graphs

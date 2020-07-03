@@ -4,25 +4,32 @@ import requests
 from tqdm import tqdm
 
 PDB_DIR = 'pdbs/'
+URL_RCSB = 'https://files.rcsb.org/view/'
 
 
-def load_data(start_pdb=139, limit=500):
+def load_data(start_pdb=0, limit=None):
+    if not os.path.exists(PDB_DIR):
+        os.makedirs(PDB_DIR)
+
     pdbs = []
     with open('pdbs.lst') as f:
         for pdb in f:
             pdbs.append(pdb.strip())
 
     print(f'Number of .pdbs: {len(pdbs)}')
-    url = 'https://files.rcsb.org/view/'
 
     i = 0
-    for pdb in tqdm(pdbs[start_pdb:start_pdb + limit]):
+    if limit is None:
+        all_pdbs = pdbs[start_pdb:]
+    else:
+        all_pdbs = pdbs[start_pdb:start_pdb + limit]
+    for pdb in tqdm(all_pdbs):
         # if i % 10 == 0:
         #     print('.', end='')
         filename = f'{pdb}.pdb'
         if not os.path.exists(PDB_DIR + filename):
             try:
-                r = requests.get(url + filename, allow_redirects=True)
+                r = requests.get(URL_RCSB + filename, allow_redirects=True, timeout=8)
                 open(PDB_DIR + filename, 'wb').write(r.content)
             except TimeoutError as te:
                 continue
@@ -36,4 +43,4 @@ def load_data(start_pdb=139, limit=500):
 
 
 if __name__ == '__main__':
-    load_data()
+    load_data(limit=500)

@@ -1,8 +1,16 @@
+import os
 
 DATA_PATH = 'data/'
 SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
 SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
+
+if not os.path.exists(DATA_PATH):
+    os.makedirs(DATA_PATH)
+if not os.path.exists(SAVED_GRAPHS_PATH):
+    os.makedirs(SAVED_GRAPHS_PATH)
+if not os.path.exists(PDB_PATH):
+    os.makedirs(PDB_PATH)
 
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
@@ -14,7 +22,14 @@ LABEL_NEGATIVE_COLOR = 'b'
 LABEL_POSITIVE = 1
 LABEL_NEGATIVE = 0
 
+EMPTY_STR_FEATURE = ' '
+NODE_APPENDED_FEATURES = {
+    'prev_res_name': 'previous_residue_name',
+    'next_res_name': 'next_residue_name'
+}
+
 NODE_FEATURES_NAME = 'features'
-NODE_FEATURES_NUM = 6
+NODE_FEATURES_NUM = 6 + len(NODE_APPENDED_FEATURES)
 EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 4
+

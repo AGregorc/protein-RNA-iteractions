@@ -10,9 +10,10 @@ import Constants
 import Preprocess
 
 
-def create_graph_sample(structure):
+def create_graph_sample(model_structure):
     # protein_atoms, atom_features, labels = Preprocess.get_atoms_features_and_labels(structure)
-    protein_chains = Preprocess.label_protein_rna_interactions(structure)
+    protein_chains = Preprocess.label_protein_rna_interactions(model_structure)
+    Preprocess.generate_node_features(model_structure)
     protein_atoms = Preprocess.get_atoms_list(protein_chains)
 
     pairs = Preprocess.find_pairs(protein_atoms)
@@ -110,7 +111,8 @@ def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
 def get_dataset(load_filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE, directory_path=Constants.PDB_PATH, limit=None):
     try:
         dataset, dataset_filenames = load_dataset(load_filename)
-    except:
+    except Exception as e:
+        print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
         dataset, dataset_filenames = create_dataset(directory_path, limit)
     return dataset, dataset_filenames
 

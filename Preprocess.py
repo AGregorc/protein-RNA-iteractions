@@ -1,8 +1,9 @@
 import json
+from collections import deque
 
 import dgl
 import torch
-from Bio.PDB import PPBuilder, NeighborSearch
+from Bio.PDB import PPBuilder, NeighborSearch, Chain
 
 import Constants
 import numpy as np
@@ -119,6 +120,29 @@ def get_labeled_color(atom):
     return Constants.LABEL_NEGATIVE_COLOR
 
 
+def generate_node_features(protein_chains):
+    for chain in protein_chains:
+        residue_generator = chain.get_residues()
+
+        last_n_residues = deque([None, next(residue_generator), next(residue_generator, None)])
+        while last_n_residues[1] is not None:
+            prev_res = last_n_residues.popleft()
+            prev_res_name = Constants.EMPTY_STR_FEATURE
+            if prev_res is not None:
+                prev_res_name = prev_res.resname
+            res = last_n_residues[0]
+
+            next_res = last_n_residues[1]
+            next_res_name = Constants.EMPTY_STR_FEATURE
+            if next_res is not None:
+                next_res_name = next_res.resname
+
+            for atom in res.get_atoms():
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], prev_res_name)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], next_res_name)
+            last_n_residues.append(next(residue_generator, None))
+
+
 def node_features(atom):
     """
         Assign features to a atom.
@@ -136,6 +160,8 @@ def node_features(atom):
         atom.element,
         atom.fullname,  # string
         atom.get_parent().resname,  # string
+        getattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], Constants.EMPTY_STR_FEATURE),
+        getattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], Constants.EMPTY_STR_FEATURE)
     ]
 
     Constants.NODE_FEATURES_NUM = len(features)
@@ -227,9 +253,11 @@ def save_feat_word_to_ixs(filename):
 def load_feat_word_to_ixs(filename):
     global node_feat_word_to_ixs, node_feat_wti_lens
     with open(filename+'.json', 'r') as fp:
-        node_feat_word_to_ixs = json.load(fp)
+        node_feat_word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
+
     node_feat_wti_lens = {}
     for col in node_feat_word_to_ixs:
+        col = int(col)
         node_feat_wti_lens[col] = len(node_feat_word_to_ixs[col])
 
 

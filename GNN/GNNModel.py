@@ -13,7 +13,7 @@ from GNN.Net import Net
 GCNBatch = namedtuple('GCNBatch', ['graph', 'labels'])
 
 
-class GNNModel(GeneralModel):
+class GNNModel:
     def __init__(self, net, device=None):
         # self.net = Net(hidden_sizes=[8, 16, 10, 8, 4], dropout_p=dropout)
         self.net = net
@@ -29,6 +29,13 @@ class GNNModel(GeneralModel):
         graph = graph.to(self.device)
         return self.net(graph)
 
+    def get_name(self):
+        return self.__class__.__name__
+
+    def print(self, *print_args):
+        print('[%s]' % self.get_name(), end=' ')
+        print(*print_args)
+
     @staticmethod
     def batcher(device):
         def batcher_dev(batch):
@@ -38,7 +45,7 @@ class GNNModel(GeneralModel):
 
         return batcher_dev
 
-    def train(self, dataset, lr=0.05, loss_weights=None, weight_decay=1e-4, epochs=10, batch_size=1):
+    def train(self, dataset, lr=0.09, loss_weights=None, weight_decay=1e-4, epochs=10, batch_size=1):
         self.net.train()
         if loss_weights is None:
             loss_weights = [1.0, 1.0]
@@ -65,11 +72,11 @@ class GNNModel(GeneralModel):
                 #         print(logp, batch.labels)
                 # we only compute loss for labeled nodes
                 loss = F.nll_loss(logp, batch.labels, weight=loss_weights)
+
+                optimizer.zero_grad()
                 if torch.isnan(loss).any():
                     print(f'Loss is NAN at step: {step}')
                     continue
-
-                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
