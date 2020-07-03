@@ -26,6 +26,7 @@ class GNNModel(GeneralModel):
         self.net.to(self.device)
 
     def __call__(self, graph):
+        graph = graph.to(self.device)
         return self.net(graph)
 
     @staticmethod

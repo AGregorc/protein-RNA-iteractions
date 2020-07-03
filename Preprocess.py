@@ -233,6 +233,14 @@ def load_feat_word_to_ixs(filename):
         node_feat_wti_lens[col] = len(node_feat_word_to_ixs[col])
 
 
+def get_feat_word_to_ixs():
+    return node_feat_word_to_ixs
+
+
+def get_feat_wti_lens():
+    return node_feat_wti_lens
+
+
 def transform_node_features(features_list):
     """
         As we know from node_features function, node features contain also string elements.
@@ -254,6 +262,7 @@ def transform_node_features(features_list):
             result[:, col] = [feat[col] for feat in features_list]
 
     for col in node_feat_word_to_ixs.keys():
+        col = int(col)
         for j, feat in enumerate(features_list):
             word = feat[col]
             if word not in node_feat_word_to_ixs[col]:

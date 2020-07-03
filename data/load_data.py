@@ -6,7 +6,7 @@ from tqdm import tqdm
 PDB_DIR = 'pdbs/'
 
 
-def load_data(start_pdb=30, limit=100):
+def load_data(start_pdb=139, limit=500):
     pdbs = []
     with open('pdbs.lst') as f:
         for pdb in f:
@@ -21,8 +21,12 @@ def load_data(start_pdb=30, limit=100):
         #     print('.', end='')
         filename = f'{pdb}.pdb'
         if not os.path.exists(PDB_DIR + filename):
-            r = requests.get(url + filename, allow_redirects=True)
-            open(PDB_DIR + filename, 'wb').write(r.content)
+            try:
+                r = requests.get(url + filename, allow_redirects=True)
+                open(PDB_DIR + filename, 'wb').write(r.content)
+            except TimeoutError as te:
+                continue
+
             i += 1
         # else:
         #     print(f'File {filename} already exists')

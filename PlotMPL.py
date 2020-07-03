@@ -59,6 +59,7 @@ def plot_from_file(filename, color_func):
 def plot_predicted(filename, model):
     G, atoms, pairs, labels = my_pdb_parser(filename)
     logits = model(G)
+    logits = logits.cpu()
 
     def get_predicted_color(atom):
         dgl_id = get_dgl_id(atom)
