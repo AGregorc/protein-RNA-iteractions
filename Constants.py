@@ -2,7 +2,8 @@ import os
 
 DATA_PATH = 'data/'
 SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
-SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data.bin'
+SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
+GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
 
 if not os.path.exists(DATA_PATH):
@@ -25,11 +26,14 @@ LABEL_NEGATIVE = 0
 EMPTY_STR_FEATURE = ' '
 NODE_APPENDED_FEATURES = {
     'prev_res_name': 'previous_residue_name',
-    'next_res_name': 'next_residue_name'
+    'next_res_name': 'next_residue_name',
+    'residue_depth': 'residue_depth',
+    'atom_depth': 'atom_depth',
+    'ca_depth': 'ca_depth',
 }
 
 NODE_FEATURES_NAME = 'features'
-NODE_FEATURES_NUM = 6 + len(NODE_APPENDED_FEATURES)
+NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES)
 EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 4
 

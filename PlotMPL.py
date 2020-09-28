@@ -34,7 +34,7 @@ def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None, title=
 
     if atoms:
         x, y, z = [], [], []
-        col = None
+        col = '#3449FF'
         # check if we want colors
         if atom_color_func(atoms[0]):
             col = []
@@ -44,7 +44,7 @@ def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None, title=
             x.append(vec[0])
             y.append(vec[1])
             z.append(vec[2])
-            if col is not None:
+            if isinstance(col, list):
                 col.append(atom_color_func(atom))
 
         ax.scatter(x, y, z, c=col, s=3, marker='o')

@@ -1,12 +1,49 @@
 import json
+import math
 from collections import deque
 
 import dgl
 import torch
-from Bio.PDB import PPBuilder, NeighborSearch, Chain
+from Bio.PDB import PPBuilder, NeighborSearch, Chain, get_surface, is_aa
+from Bio.PDB.ResidueDepth import residue_depth, ca_depth, min_dist
 
 import Constants
 import numpy as np
+
+
+def create_graph_sample(model_structure):
+    # protein_atoms, atom_features, labels = get_atoms_features_and_labels(structure)
+    protein_chains = label_protein_rna_interactions(model_structure)
+    protein_atoms = get_atoms_list(protein_chains)
+    surface = get_surface(protein_chains)
+    generate_node_features(protein_chains, surface)
+
+    pairs = find_pairs(protein_atoms)
+
+    ##############################################################################
+    atoms_with_edge = set()
+    for a1, a2 in pairs:
+        atoms_with_edge.add(a1)
+        atoms_with_edge.add(a2)
+    filtered_atoms = list(filter(lambda atom: atom in atoms_with_edge, protein_atoms))
+    removed = len(protein_atoms) - len(filtered_atoms)
+    if removed > 0:
+        # protein_atoms = filtered_atoms
+        num_atoms = len(filtered_atoms)
+        percent = removed * 100 / (removed + num_atoms)
+        print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
+    ##############################################################################
+
+    atom_features, labels = get_atoms_features_and_labels(protein_atoms, surface)
+    # if plot:
+    #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
+
+    G = create_dgl_graph(pairs, len(protein_atoms), set_edge_features=True, node_features=atom_features,
+                         labels=labels)
+    assert G.number_of_nodes() == len(protein_atoms)
+
+    #     return Sample(graph=G, atoms=protein_atoms, pairs=pairs, labels=labels)
+    return G, protein_atoms, pairs, labels
 
 
 def find_pairs(atoms, distance=1.7, level='A', do_print=False):
@@ -30,19 +67,30 @@ def find_pairs(atoms, distance=1.7, level='A', do_print=False):
     return pairs
 
 
-def get_atoms_list(structure_list):
+def get_atoms_list(protein_chains):
     """
 
-    :param structure_list: list of Bio structures or a Bio structure
+    :param protein_chains: list of Bio structures or a Bio structure
     :return: list of all atoms inside structure_list
     """
     atoms = []
-    if isinstance(structure_list, list):
-        for structure in structure_list:
-            atoms = atoms + list(structure.get_atoms())
+    if isinstance(protein_chains, list):
+        for chain in protein_chains:
+            chain = filter_chain(chain)
+            atoms = atoms + list(chain.get_atoms())
     else:
-        atoms = list(structure_list.get_atoms())
+        atoms = list(protein_chains.get_atoms())
     return atoms
+
+
+def filter_chain(chain):
+    non_aas = []
+    for idx, residue in enumerate(chain):
+        if not is_aa(residue):
+            non_aas.append(residue.id)
+    for non_aa in non_aas:
+        chain.__delitem__(non_aa)
+    return chain
 
 
 def is_protein(chain):
@@ -120,7 +168,7 @@ def get_labeled_color(atom):
     return Constants.LABEL_NEGATIVE_COLOR
 
 
-def generate_node_features(protein_chains):
+def generate_node_features(protein_chains, surface):
     for chain in protein_chains:
         residue_generator = chain.get_residues()
 
@@ -137,9 +185,20 @@ def generate_node_features(protein_chains):
             if next_res is not None:
                 next_res_name = next_res.resname
 
+            res_d = residue_depth(res, surface)
+            ca_d = ca_depth(res, surface)
+            if res_d is None or ca_d is None:
+                print("Nan values!!!")
+
             for atom in res.get_atoms():
+                atom_d = min_dist(atom.get_coord(), surface)
+                if atom_d is None:
+                    print(f"Nan valuess!! {atom_d}, {atom}")
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], prev_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], next_res_name)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['residue_depth'], res_d)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_depth'], ca_d)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_depth'], atom_d)
             last_n_residues.append(next(residue_generator, None))
 
 
@@ -155,20 +214,23 @@ def node_features(atom):
 
     features = [
         atom.mass,
-        atom.bfactor,
+        # atom.bfactor,
         atom.occupancy,
-        atom.element,
+        atom.element,  # string
         atom.fullname,  # string
         atom.get_parent().resname,  # string
-        getattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], Constants.EMPTY_STR_FEATURE),
-        getattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], Constants.EMPTY_STR_FEATURE)
+        # getattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], Constants.EMPTY_STR_FEATURE), # string
+        # getattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], Constants.EMPTY_STR_FEATURE)  # string
     ]
+
+    for feature_name in Constants.NODE_APPENDED_FEATURES:
+        features.append(getattr(atom, Constants.NODE_APPENDED_FEATURES[feature_name]))
 
     Constants.NODE_FEATURES_NUM = len(features)
     return features
 
 
-def get_atoms_features_and_labels(protein_atoms):
+def get_atoms_features_and_labels(protein_atoms, surface):
     """
         Create node features and label them.
         Since node features have numerical and string types we return list of features.
@@ -246,13 +308,13 @@ node_feat_wti_lens = {}
 
 
 def save_feat_word_to_ixs(filename):
-    with open(filename+'.json', 'w') as fp:
+    with open(filename + '.json', 'w') as fp:
         json.dump(node_feat_word_to_ixs, fp)
 
 
 def load_feat_word_to_ixs(filename):
     global node_feat_word_to_ixs, node_feat_wti_lens
-    with open(filename+'.json', 'r') as fp:
+    with open(filename + '.json', 'r') as fp:
         node_feat_word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
 
     node_feat_wti_lens = {}

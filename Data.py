@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import warnings
 import torch
 
@@ -7,41 +8,7 @@ from Bio.PDB import PDBParser
 from dgl.data import save_graphs, load_graphs
 
 import Constants
-import Preprocess
-
-
-def create_graph_sample(model_structure):
-    # protein_atoms, atom_features, labels = Preprocess.get_atoms_features_and_labels(structure)
-    protein_chains = Preprocess.label_protein_rna_interactions(model_structure)
-    Preprocess.generate_node_features(model_structure)
-    protein_atoms = Preprocess.get_atoms_list(protein_chains)
-
-    pairs = Preprocess.find_pairs(protein_atoms)
-
-    ##############################################################################
-    atoms_with_edge = set()
-    for a1, a2 in pairs:
-        atoms_with_edge.add(a1)
-        atoms_with_edge.add(a2)
-    filtered_atoms = list(filter(lambda atom: atom in atoms_with_edge, protein_atoms))
-    removed = len(protein_atoms) - len(filtered_atoms)
-    if removed > 0:
-        # protein_atoms = filtered_atoms
-        num_atoms = len(filtered_atoms)
-        percent = removed * 100 / (removed + num_atoms)
-        print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
-    ##############################################################################
-
-    atom_features, labels = Preprocess.get_atoms_features_and_labels(protein_atoms)
-    # if plot:
-    #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=Preprocess.get_labeled_color)
-
-    G = Preprocess.create_dgl_graph(pairs, len(protein_atoms), set_edge_features=True, node_features=atom_features,
-                                    labels=labels)
-    assert G.number_of_nodes() == len(protein_atoms)
-
-    #     return Sample(graph=G, atoms=protein_atoms, pairs=pairs, labels=labels)
-    return G, protein_atoms, pairs, labels
+from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
 
 def my_pdb_parser(filename, directory_path=Constants.PDB_PATH):
@@ -65,14 +32,15 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
         if filename.endswith(".pdb"):
-            try:
-                G, atoms, pairs, labels = my_pdb_parser(filename, directory_path)
-
-            except Exception as e:
-                error_count += 1
-                print(f'Error during parsing file {filename}')
-                continue
-            print(f'File {filename} added')
+            start_time = time.time()
+            # try:
+            G, atoms, pairs, labels = my_pdb_parser(filename, directory_path)
+            #
+            # except Exception as e:
+            #     error_count += 1
+            #     print(f'Error during parsing file {filename}, {e}')
+            #     continue
+            print(f'File {filename} added in {(time.time() - start_time):.1f}s')
             dataset.append(G)
             dataset_filenames.append(filename)
         if limit is not None and len(dataset) >= limit:
@@ -80,7 +48,9 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     return dataset, dataset_filenames
 
 
-def save_dataset(dataset, dataset_filenames, filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
+def save_dataset(dataset, dataset_filenames, filename=None):
+    if filename is None:
+        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(len(dataset)) + Constants.GRAPH_EXTENSION
     save_graphs(filename, dataset)
 
     fn_no_extension = filename.split('.')[0]
@@ -90,7 +60,7 @@ def save_dataset(dataset, dataset_filenames, filename=Constants.SAVED_GRAPHS_PAT
         json.dump(dataset_filenames, f)
 
     filename_wti = fn_no_extension + '_word_to_ix'
-    Preprocess.save_feat_word_to_ixs(filename_wti)
+    save_feat_word_to_ixs(filename_wti)
 
 
 def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
@@ -104,16 +74,22 @@ def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
         dataset_filenames = json.load(f)
 
     filename_wti = fn_no_extension + '_word_to_ix'
-    Preprocess.load_feat_word_to_ixs(filename_wti)
+    load_feat_word_to_ixs(filename_wti)
     return dataset, dataset_filenames
 
 
-def get_dataset(load_filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE, directory_path=Constants.PDB_PATH, limit=None):
+def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None):
+    if load_filename is None:
+        load_filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
     try:
+        start_time = time.time()
         dataset, dataset_filenames = load_dataset(load_filename)
+        print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
+        start_time = time.time()
         dataset, dataset_filenames = create_dataset(directory_path, limit)
+        print(f'Dataset created in {(time.time() - start_time):.1f}s')
     return dataset, dataset_filenames
 
 
