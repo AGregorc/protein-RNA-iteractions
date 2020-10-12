@@ -3,6 +3,9 @@
 # Pycharm 
 .idea/*
 
+data/preprocessed_data/*
+data/images/*
+
 # all pdb files:
 *.pdb
 

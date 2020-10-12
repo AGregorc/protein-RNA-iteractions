@@ -1,7 +1,10 @@
 import json
 import os
+import threading
 import time
 import warnings
+from queue import Queue, Empty
+
 import torch
 
 from Bio.PDB import PDBParser
@@ -21,17 +24,12 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH):
     return create_graph_sample(model)
 
 
-def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
-    # directory = os.fsencode(PDB_PATH)
-    directory = os.fsencode(directory_path)
-
-    dataset = []
-    dataset_filenames = []
-    error_count = 0
-
-    for file in os.listdir(directory):
-        filename = os.fsdecode(file)
-        if filename.endswith(".pdb"):
+def create_graph_worker(worker_id, filename_queue, dataset, directory_path, dataset_dict):
+    # print(f'[{worker_id}]')
+    while True:
+        try:
+            filename = filename_queue.get()
+            print(f'[{worker_id}] got something to work :O')
             start_time = time.time()
             # try:
             G, atoms, pairs, labels = my_pdb_parser(filename, directory_path)
@@ -40,11 +38,46 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
             #     error_count += 1
             #     print(f'Error during parsing file {filename}, {e}')
             #     continue
-            print(f'File {filename} added in {(time.time() - start_time):.1f}s')
-            dataset.append(G)
+            print(f'[{worker_id}] File {filename} ({dataset_dict[filename]}) added in {(time.time() - start_time):.1f}s')
+            dataset[dataset_dict[filename]] = G
+        except Empty:
+            return
+        else:
+            filename_queue.task_done()
+
+
+def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
+    directory = os.fsencode(directory_path)
+
+    idx = 0
+    dataset_dict = {}
+    filename_queue = Queue()
+    dataset_filenames = []
+
+    for file in os.listdir(directory):
+        filename = os.fsdecode(file)
+        if filename.endswith(".pdb"):
+            dataset_dict[filename] = idx
+            filename_queue.put(filename)
             dataset_filenames.append(filename)
-        if limit is not None and len(dataset) >= limit:
+            idx += 1
+
+        if limit is not None and idx >= limit:
             break
+
+    threads = []
+    dataset = [None] * len(dataset_filenames)
+    error_count = 0
+    # print("as")
+
+    start_time = time.time()
+    for i in range(Constants.NUM_THREADS):
+        threads.append(threading.Thread(target=create_graph_worker,
+                                        args=(i, filename_queue, dataset, directory_path, dataset_dict)).start())
+
+    filename_queue.join()
+    print(f'Dataset created in {(time.time() - start_time):.1f}s')
+
     return dataset, dataset_filenames
 
 
@@ -87,9 +120,7 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
         print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
-        start_time = time.time()
         dataset, dataset_filenames = create_dataset(directory_path, limit)
-        print(f'Dataset created in {(time.time() - start_time):.1f}s')
     return dataset, dataset_filenames
 
 

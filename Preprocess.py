@@ -21,17 +21,17 @@ def create_graph_sample(model_structure):
     pairs = find_pairs(protein_atoms)
 
     ##############################################################################
-    atoms_with_edge = set()
-    for a1, a2 in pairs:
-        atoms_with_edge.add(a1)
-        atoms_with_edge.add(a2)
-    filtered_atoms = list(filter(lambda atom: atom in atoms_with_edge, protein_atoms))
-    removed = len(protein_atoms) - len(filtered_atoms)
-    if removed > 0:
-        # protein_atoms = filtered_atoms
-        num_atoms = len(filtered_atoms)
-        percent = removed * 100 / (removed + num_atoms)
-        print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
+    # atoms_with_edge = set()
+    # for a1, a2 in pairs:
+    #     atoms_with_edge.add(a1)
+    #     atoms_with_edge.add(a2)
+    # filtered_atoms = list(filter(lambda atom: atom in atoms_with_edge, protein_atoms))
+    # removed = len(protein_atoms) - len(filtered_atoms)
+    # if removed > 0:
+    #     # protein_atoms = filtered_atoms
+    #     num_atoms = len(filtered_atoms)
+    #     percent = removed * 100 / (removed + num_atoms)
+    #     print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
     ##############################################################################
 
     atom_features, labels = get_atoms_features_and_labels(protein_atoms, surface)
@@ -187,12 +187,18 @@ def generate_node_features(protein_chains, surface):
 
             res_d = residue_depth(res, surface)
             ca_d = ca_depth(res, surface)
-            if res_d is None or ca_d is None:
+            if res_d is None:
+                res_d = 5.0
+                print("Nan values!!!")
+
+            if ca_d is None:
+                ca_d = 5.0
                 print("Nan values!!!")
 
             for atom in res.get_atoms():
                 atom_d = min_dist(atom.get_coord(), surface)
                 if atom_d is None:
+                    atom_d = 5.0
                     print(f"Nan valuess!! {atom_d}, {atom}")
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], prev_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], next_res_name)
