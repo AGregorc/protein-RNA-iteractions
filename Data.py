@@ -3,7 +3,8 @@ import os
 import threading
 import time
 import warnings
-from queue import Queue, Empty
+from multiprocessing import Process, Pool
+from queue import Empty, Queue
 
 import torch
 
@@ -33,17 +34,22 @@ def create_graph_worker(worker_id, filename_queue, dataset, directory_path, data
             start_time = time.time()
             # try:
             G, atoms, pairs, labels = my_pdb_parser(filename, directory_path)
-            #
-            # except Exception as e:
-            #     error_count += 1
-            #     print(f'Error during parsing file {filename}, {e}')
-            #     continue
-            print(f'[{worker_id}] File {filename} ({dataset_dict[filename]}) added in {(time.time() - start_time):.1f}s')
+            print(
+                f'[{worker_id}] File {filename} ({dataset_dict[filename]}) added in {(time.time() - start_time):.1f}s')
             dataset[dataset_dict[filename]] = G
         except Empty:
             return
         else:
             filename_queue.task_done()
+
+
+def create_graph_process(args):
+    my_filename, directory_path = args
+    print(f'[{os.getpid()}] got something to work :O')
+    start_time = time.time()
+    graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path)
+    print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
+    return my_filename, graph
 
 
 def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
@@ -65,17 +71,14 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
         if limit is not None and idx >= limit:
             break
 
-    threads = []
     dataset = [None] * len(dataset_filenames)
-    error_count = 0
-    # print("as")
 
+    pool = Pool(processes=Constants.NUM_THREADS)
     start_time = time.time()
-    for i in range(Constants.NUM_THREADS):
-        threads.append(threading.Thread(target=create_graph_worker,
-                                        args=(i, filename_queue, dataset, directory_path, dataset_dict)).start())
+    result = pool.map(create_graph_process, map(lambda df: (df, directory_path), dataset_filenames))
+    for filename, graph in result:
+        dataset[dataset_dict[filename]] = graph
 
-    filename_queue.join()
     print(f'Dataset created in {(time.time() - start_time):.1f}s')
 
     return dataset, dataset_filenames
