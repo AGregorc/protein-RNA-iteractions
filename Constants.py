@@ -1,11 +1,12 @@
 import os
+import groups
 
 DATA_PATH = 'data/'
 SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
 SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
-NUM_THREADS = 20
+NUM_THREADS = 3
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -13,6 +14,8 @@ if not os.path.exists(SAVED_GRAPHS_PATH):
     os.makedirs(SAVED_GRAPHS_PATH)
 if not os.path.exists(PDB_PATH):
     os.makedirs(PDB_PATH)
+
+GET_ONLY_CA_ATOMS = False
 
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
@@ -33,8 +36,10 @@ NODE_APPENDED_FEATURES = {
     'ca_depth': 'ca_depth',
 }
 
+NODE_GROUP_FEATURES = groups.group_list
+
 NODE_FEATURES_NAME = 'features'
-NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES)
+NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES) + len(NODE_GROUP_FEATURES)
 EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 4
 

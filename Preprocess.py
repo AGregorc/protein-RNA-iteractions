@@ -10,12 +10,14 @@ from Bio.PDB.ResidueDepth import residue_depth, ca_depth, min_dist
 import Constants
 import numpy as np
 
+from groups import a2gs
+
 
 def create_graph_sample(model_structure):
     # protein_atoms, atom_features, labels = get_atoms_features_and_labels(structure)
     protein_chains = label_protein_rna_interactions(model_structure)
-    protein_atoms = get_atoms_list(protein_chains)
     surface = get_surface(protein_chains)
+    protein_atoms = get_atoms_list(protein_chains)
     generate_node_features(protein_chains, surface)
 
     pairs = find_pairs(protein_atoms)
@@ -67,19 +69,21 @@ def find_pairs(atoms, distance=1.7, level='A', do_print=False):
     return pairs
 
 
-def get_atoms_list(protein_chains):
+def get_atoms_list(protein_chains, only_ca=Constants.GET_ONLY_CA_ATOMS):
     """
 
     :param protein_chains: list of Bio structures or a Bio structure
+    :param only_ca: if true it returns just CA atoms
     :return: list of all atoms inside structure_list
     """
     atoms = []
-    if isinstance(protein_chains, list):
-        for chain in protein_chains:
-            chain = filter_chain(chain)
+    for chain in protein_chains:
+        chain = filter_chain(chain)
+        if only_ca:
+            for residue in chain:
+                atoms.append(residue['CA'])
+        else:
             atoms = atoms + list(chain.get_atoms())
-    else:
-        atoms = list(protein_chains.get_atoms())
     return atoms
 
 
@@ -168,7 +172,7 @@ def get_labeled_color(atom):
     return Constants.LABEL_NEGATIVE_COLOR
 
 
-def generate_node_features(protein_chains, surface):
+def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
     for chain in protein_chains:
         residue_generator = chain.get_residues()
 
@@ -196,6 +200,9 @@ def generate_node_features(protein_chains, surface):
                 print("Nan values!!!")
 
             for atom in res.get_atoms():
+                if only_ca:
+                    atom = res['CA']
+
                 atom_d = min_dist(atom.get_coord(), surface)
                 if atom_d is None:
                     atom_d = 5.0
@@ -205,6 +212,9 @@ def generate_node_features(protein_chains, surface):
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['residue_depth'], res_d)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_depth'], ca_d)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_depth'], atom_d)
+
+                if only_ca:
+                    break
             last_n_residues.append(next(residue_generator, None))
 
 
@@ -217,6 +227,7 @@ def node_features(atom):
     :return: list of features
     """
     # global NODE_FEATURES_NUM
+    aa = atom.get_parent().resname.upper()
 
     features = [
         atom.mass,
@@ -224,13 +235,19 @@ def node_features(atom):
         atom.occupancy,
         atom.element,  # string
         atom.fullname,  # string
-        atom.get_parent().resname,  # string
+        aa,  # string
         # getattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], Constants.EMPTY_STR_FEATURE), # string
         # getattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], Constants.EMPTY_STR_FEATURE)  # string
     ]
 
     for feature_name in Constants.NODE_APPENDED_FEATURES:
         features.append(getattr(atom, Constants.NODE_APPENDED_FEATURES[feature_name]))
+
+    for group_feature in Constants.NODE_GROUP_FEATURES:
+        if group_feature in a2gs[aa]:
+            features.append(1)
+        else:
+            features.append(0)
 
     Constants.NODE_FEATURES_NUM = len(features)
     return features
