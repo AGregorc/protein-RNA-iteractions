@@ -90,7 +90,7 @@ def get_atoms_list(protein_chains, only_ca=Constants.GET_ONLY_CA_ATOMS):
 def filter_chain(chain):
     non_aas = []
     for idx, residue in enumerate(chain):
-        if not is_aa(residue):
+        if not is_aa(residue, standard=True):
             non_aas.append(residue.id)
     for non_aa in non_aas:
         chain.__delitem__(non_aa)
@@ -365,16 +365,19 @@ def transform_node_features(features_list):
     global node_feat_word_to_ixs
     result = np.zeros((len(features_list), len(features_list[0])))
 
+    dict_copy = [*node_feat_word_to_ixs.keys()]
     for col, feat in enumerate(features_list[0]):
         if isinstance(feat, str):
-            if col not in node_feat_word_to_ixs:
+            if col not in dict_copy:
                 # we have to find columns with strings then.
                 node_feat_word_to_ixs[col] = {}  # init word to ix for each column with strings
+                dict_copy.append(col)  # add column to a copy list too
                 node_feat_wti_lens[col] = 0
         else:
             result[:, col] = [feat[col] for feat in features_list]
 
-    for col in node_feat_word_to_ixs.keys():
+    columns = [*node_feat_word_to_ixs.keys()]
+    for col in columns:
         col = int(col)
         for j, feat in enumerate(features_list):
             word = feat[col]
