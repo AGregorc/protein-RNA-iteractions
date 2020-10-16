@@ -6,7 +6,7 @@ SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
 SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
-NUM_THREADS = 3
+NUM_THREADS = 5
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -34,6 +34,11 @@ NODE_APPENDED_FEATURES = {
     'residue_depth': 'residue_depth',
     'atom_depth': 'atom_depth',
     'ca_depth': 'ca_depth',
+    'ca_atom_dist': 'ca_atom_dist',
+    'cb_ca_surf_angle': 'cb_ca_surf_angle',
+    'ca_cb_surf_angle': 'ca_cb_surf_angle',
+    'atom_ca_surf_angle': 'atom_ca_surf_angle',
+    'ca_atom_surf_angle': 'ca_atom_surf_angle',
 }
 
 NODE_GROUP_FEATURES = groups.group_list

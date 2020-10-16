@@ -1,15 +1,13 @@
 import json
-import math
 from collections import deque
 
 import dgl
+import numpy as np
 import torch
-from Bio.PDB import PPBuilder, NeighborSearch, Chain, get_surface, is_aa
-from Bio.PDB.ResidueDepth import residue_depth, ca_depth, min_dist
+from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector
+from Bio.PDB.ResidueDepth import residue_depth
 
 import Constants
-import numpy as np
-
 from groups import a2gs
 
 
@@ -172,6 +170,14 @@ def get_labeled_color(atom):
     return Constants.LABEL_NEGATIVE_COLOR
 
 
+def min_dist(coord, surface):
+    """Return minimum distance between coord and surface."""
+    d = surface - coord
+    d2 = np.sum(d * d, 1)
+    idx = np.argmin(d2)
+    return np.sqrt(d2[idx]), idx
+
+
 def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
     for chain in protein_chains:
         residue_generator = chain.get_residues()
@@ -189,8 +195,23 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             if next_res is not None:
                 next_res_name = next_res.resname
 
+            is_cb = 'CB' in res
+            cb_ca_surf_angle = 0
+            ca_cb_surf_angle = 0
+
+            ca_atom = res['CA']
+            ca_d, ca_surf_idx = min_dist(ca_atom.get_coord(), surface)
+            ca_vec = ca_atom.get_vector()
+            if not is_cb:
+                # print('there is no CB ..... :(((((((')
+                pass
+            else:
+                cb_vec = res['CB'].get_vector()
+                cb_d, cb_surf_idx = min_dist(res['CB'].get_coord(), surface)
+                cb_ca_surf_angle = calc_angle(cb_vec, ca_vec, Vector(surface[ca_surf_idx]))
+                ca_cb_surf_angle = calc_angle(ca_vec, cb_vec, Vector(surface[cb_surf_idx]))
+
             res_d = residue_depth(res, surface)
-            ca_d = ca_depth(res, surface)
             if res_d is None:
                 res_d = 5.0
                 print("Nan values!!!")
@@ -201,17 +222,27 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
 
             for atom in res.get_atoms():
                 if only_ca:
-                    atom = res['CA']
+                    atom = ca_atom
 
-                atom_d = min_dist(atom.get_coord(), surface)
+                atom_d, s_idx = min_dist(atom.get_coord(), surface)
+                d = atom.get_coord() - ca_atom.get_coord()
+                ca_atom_dist = np.sqrt(np.sum(d*d))
+                atom_ca_surf_angle = calc_angle(atom.get_vector(), ca_vec, Vector(surface[s_idx]))
+                ca_atom_surf_angle = calc_angle(ca_vec, atom.get_vector(), Vector(surface[s_idx]))
+
                 if atom_d is None:
                     atom_d = 5.0
                     print(f"Nan valuess!! {atom_d}, {atom}")
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], prev_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], next_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['residue_depth'], res_d)
-                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_depth'], ca_d)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_depth'], atom_d)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_depth'], ca_d)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_atom_dist'], ca_atom_dist)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['cb_ca_surf_angle'], cb_ca_surf_angle)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_cb_surf_angle'], ca_cb_surf_angle)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_ca_surf_angle'], atom_ca_surf_angle)
+                setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_atom_surf_angle'], ca_atom_surf_angle)
 
                 if only_ca:
                     break
