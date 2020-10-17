@@ -6,8 +6,9 @@
 data/preprocessed_data/*
 data/images/*
 
-# all pdb files:
+# all pdb and dssp files:
 *.pdb
+*.dssp
 
 
 # Created by .ignore support plugin (hsz.mobi)
