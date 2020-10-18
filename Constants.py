@@ -6,7 +6,8 @@ SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'
 SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
-NUM_THREADS = 5
+DSSP_PATH = DATA_PATH + 'dssp/'
+NUM_THREADS = 10
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -14,6 +15,8 @@ if not os.path.exists(SAVED_GRAPHS_PATH):
     os.makedirs(SAVED_GRAPHS_PATH)
 if not os.path.exists(PDB_PATH):
     os.makedirs(PDB_PATH)
+if not os.path.exists(DSSP_PATH):
+    os.makedirs(DSSP_PATH)
 
 GET_ONLY_CA_ATOMS = False
 
@@ -42,9 +45,10 @@ NODE_APPENDED_FEATURES = {
 }
 
 NODE_GROUP_FEATURES = groups.group_list
+DSSP_FEATURES_NAME = 'dssp_features'
+DSSP_FEATURES_NUM = 14
 
 NODE_FEATURES_NAME = 'features'
-NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES) + len(NODE_GROUP_FEATURES)
+NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES) + len(NODE_GROUP_FEATURES) + DSSP_FEATURES_NUM
 EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 4
-

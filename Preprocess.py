@@ -4,7 +4,7 @@ from collections import deque
 import dgl
 import numpy as np
 import torch
-from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector
+from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector, make_dssp_dict
 from Bio.PDB.ResidueDepth import residue_depth
 
 import Constants
@@ -34,7 +34,7 @@ def create_graph_sample(model_structure):
     #     print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
     ##############################################################################
 
-    atom_features, labels = get_atoms_features_and_labels(protein_atoms, surface)
+    atom_features, labels = get_atom_features_and_labels(protein_atoms)
     # if plot:
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
@@ -179,6 +179,8 @@ def min_dist(coord, surface):
 
 
 def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
+    pdb_id = protein_chains[0].get_parent().full_id[0]
+    dssp = make_dssp_dict(Constants.DSSP_PATH + pdb_id + '.dssp')
     for chain in protein_chains:
         residue_generator = chain.get_residues()
 
@@ -194,6 +196,13 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             next_res_name = Constants.EMPTY_STR_FEATURE
             if next_res is not None:
                 next_res_name = next_res.resname
+
+            key = res.full_id[2:]
+            if key not in dssp[0]:
+                key = (key[0], (' ', key[1][1], ' '))
+                if key not in dssp[0]:
+                    print('wtffffffffff, dssp key not found')
+            dssp_features = dssp[0][key]
 
             is_cb = 'CB' in res
             cb_ca_surf_angle = 0
@@ -227,8 +236,11 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 atom_d, s_idx = min_dist(atom.get_coord(), surface)
                 d = atom.get_coord() - ca_atom.get_coord()
                 ca_atom_dist = np.sqrt(np.sum(d*d))
-                atom_ca_surf_angle = calc_angle(atom.get_vector(), ca_vec, Vector(surface[s_idx]))
-                ca_atom_surf_angle = calc_angle(ca_vec, atom.get_vector(), Vector(surface[s_idx]))
+                atom_ca_surf_angle = 0
+                ca_atom_surf_angle = 0
+                if not np.array_equal(atom.get_coord(), ca_atom.get_coord()):
+                    atom_ca_surf_angle = calc_angle(atom.get_vector(), ca_vec, Vector(surface[s_idx]))
+                    ca_atom_surf_angle = calc_angle(ca_vec, atom.get_vector(), Vector(surface[s_idx]))
 
                 if atom_d is None:
                     atom_d = 5.0
@@ -243,6 +255,7 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_cb_surf_angle'], ca_cb_surf_angle)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_ca_surf_angle'], atom_ca_surf_angle)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_atom_surf_angle'], ca_atom_surf_angle)
+                setattr(atom, Constants.DSSP_FEATURES_NAME, dssp_features)
 
                 if only_ca:
                     break
@@ -280,11 +293,15 @@ def node_features(atom):
         else:
             features.append(0)
 
+    dssp_list = getattr(atom, Constants.DSSP_FEATURES_NAME, [])
+    for f in dssp_list:
+        features.append(f)
+
     Constants.NODE_FEATURES_NUM = len(features)
     return features
 
 
-def get_atoms_features_and_labels(protein_atoms, surface):
+def get_atom_features_and_labels(protein_atoms):
     """
         Create node features and label them.
         Since node features have numerical and string types we return list of features.

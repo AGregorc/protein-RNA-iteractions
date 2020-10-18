@@ -25,27 +25,9 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH):
     return create_graph_sample(model)
 
 
-def create_graph_worker(worker_id, filename_queue, dataset, directory_path, dataset_dict):
-    # print(f'[{worker_id}]')
-    while True:
-        try:
-            filename = filename_queue.get()
-            print(f'[{worker_id}] got something to work :O')
-            start_time = time.time()
-            # try:
-            G, atoms, pairs, labels = my_pdb_parser(filename, directory_path)
-            print(
-                f'[{worker_id}] File {filename} ({dataset_dict[filename]}) added in {(time.time() - start_time):.1f}s')
-            dataset[dataset_dict[filename]] = G
-        except Empty:
-            return
-        else:
-            filename_queue.task_done()
-
-
 def create_graph_process(args):
     my_filename, directory_path = args
-    print(f'[{os.getpid()}] got something to work :O')
+    # print(f'[{os.getpid()}] got something to work :O')
     start_time = time.time()
     graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path)
     print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
