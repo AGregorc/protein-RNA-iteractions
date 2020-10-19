@@ -1,18 +1,17 @@
 import json
 import os
-import threading
 import time
 import warnings
-from multiprocessing import Process, Pool
-from queue import Empty, Queue
+from multiprocessing import Pool
+from queue import Queue
 
+import numpy as np
 import torch
-
 from Bio.PDB import PDBParser
 from dgl.data import save_graphs, load_graphs
 
 import Constants
-from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
+from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs, get_feat_wti_lens
 
 
 def my_pdb_parser(filename, directory_path=Constants.PDB_PATH):
@@ -32,6 +31,16 @@ def create_graph_process(args):
     graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path)
     print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
     return my_filename, graph
+
+
+def standardize_graph_process(result):
+    filename, graph, mean, std = result
+    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_wti_lens().keys()]
+
+    graph.ndata[Constants.NODE_FEATURES_NAME][numerical_cols] -= mean
+    graph.ndata[Constants.NODE_FEATURES_NAME][numerical_cols] /= std
+
+    return filename, graph
 
 
 def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
@@ -58,6 +67,21 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     pool = Pool(processes=Constants.NUM_THREADS)
     start_time = time.time()
     result = pool.map(create_graph_process, map(lambda df: (df, directory_path), dataset_filenames))
+
+    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_wti_lens().keys()]
+    num_for_standardization = min(100, len(result))
+    means = []
+    variances = []
+    for i in range(num_for_standardization):
+        numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
+        m = np.mean(numerical_features, axis=0)
+        v = np.var(numerical_features, axis=0)
+        means.append(m)
+        variances.append(v)
+    mean = np.mean(means)
+    std = np.sqrt(np.mean(variances))
+
+    result = pool.map(standardize_graph_process, map(lambda f, g: (f, g, mean, std), result))
     for filename, graph in result:
         dataset[dataset_dict[filename]] = graph
 
