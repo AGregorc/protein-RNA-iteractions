@@ -12,10 +12,10 @@ from Preprocess import get_labeled_color, save_feat_word_to_ixs
 
 
 def main():
-    dataset, dataset_filenames = create_dataset(limit=50)
+    dataset, dataset_filenames, word_to_ixs, standardize = create_dataset(limit=5)
     # load_filename=Constants.SAVED_GRAPHS_PATH + 'graph_data_2.bin')
 
-    # save_dataset(dataset, dataset_filenames)
+    save_dataset(dataset, dataset_filenames, *standardize)
     # dataset, dataset_filenames = load_dataset()
     train_d, test_d, train_f, test_f = train_test_split(dataset, dataset_filenames, test_size=0.17)
     del dataset, dataset_filenames
@@ -29,8 +29,8 @@ def main():
 
     use_new_window()
     #
-    plot_from_file('1a1t.pdb', lambda atom: None)
-    plot_predicted('1a1t.pdb', my_model)
+    plot_from_file('1a1t.pdb', lambda atom: None, word_to_ixs)
+    plot_predicted('1a1t.pdb', my_model, word_to_ixs)
 
     # print('press any key to continue ...')
     # input()

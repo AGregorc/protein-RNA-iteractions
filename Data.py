@@ -2,7 +2,7 @@ import json
 import os
 import time
 import warnings
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 from queue import Queue
 
 import numpy as np
@@ -11,40 +11,43 @@ from Bio.PDB import PDBParser
 from dgl.data import save_graphs, load_graphs
 
 import Constants
-from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs, get_feat_wti_lens
+from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
 
-def my_pdb_parser(filename, directory_path=Constants.PDB_PATH):
+def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None):
+    if word_to_ixs is None:
+        word_to_ixs = {}
     parser = PDBParser()
     with warnings.catch_warnings(record=True):
         structure = parser.get_structure(os.path.splitext(filename)[0], os.path.join(directory_path, filename))
     model = structure[0]
     # print(structure)
     # chains = list(model.get_chains())
-    return create_graph_sample(model)
+    return create_graph_sample(model, word_to_ixs, lock)
 
 
 def create_graph_process(args):
-    my_filename, directory_path = args
+    my_filename, directory_path, word_to_ixs, lock = args
     # print(f'[{os.getpid()}] got something to work :O')
     start_time = time.time()
-    graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path)
+    graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
     print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
     return my_filename, graph
 
 
 def standardize_graph_process(result):
-    filename, graph, mean, std = result
-    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_wti_lens().keys()]
+    filename, graph, mean, std, numerical_cols = result
+    # numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_word_to_ixs().keys()]
 
-    graph.ndata[Constants.NODE_FEATURES_NAME][numerical_cols] -= mean
-    graph.ndata[Constants.NODE_FEATURES_NAME][numerical_cols] /= std
+    graph.ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols] -= mean
+    graph.ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols] /= std
 
     return filename, graph
 
 
 def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     directory = os.fsencode(directory_path)
+    manager = Manager()
 
     idx = 0
     dataset_dict = {}
@@ -63,34 +66,39 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
             break
 
     dataset = [None] * len(dataset_filenames)
+    word_to_ixs = manager.dict()
+    lock = manager.Lock()
 
     pool = Pool(processes=Constants.NUM_THREADS)
     start_time = time.time()
-    result = pool.map(create_graph_process, map(lambda df: (df, directory_path), dataset_filenames))
+    result = pool.map(create_graph_process, map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
 
-    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_wti_lens().keys()]
+    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
     num_for_standardization = min(100, len(result))
-    means = []
-    variances = []
+    means = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
+    variances = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
     for i in range(num_for_standardization):
         numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
-        m = np.mean(numerical_features, axis=0)
-        v = np.var(numerical_features, axis=0)
-        means.append(m)
-        variances.append(v)
-    mean = np.mean(means)
-    std = np.sqrt(np.mean(variances))
+        m = torch.mean(numerical_features, dim=0)
+        v = torch.var(numerical_features, dim=0)
+        means[i] = m
+        variances[i] = v
+    mean = torch.mean(means, dim=0)
+    std = torch.sqrt(torch.mean(variances, dim=0))
 
-    result = pool.map(standardize_graph_process, map(lambda f, g: (f, g, mean, std), result))
+    result = pool.map(standardize_graph_process, map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
     for filename, graph in result:
         dataset[dataset_dict[filename]] = graph
 
     print(f'Dataset created in {(time.time() - start_time):.1f}s')
 
-    return dataset, dataset_filenames
+    # Wait for all thread.
+    pool.close()
+    pool.join()
+    return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def save_dataset(dataset, dataset_filenames, filename=None):
+def save_dataset(dataset, dataset_filenames, mean, std, filename=None):
     if filename is None:
         filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(len(dataset)) + Constants.GRAPH_EXTENSION
     save_graphs(filename, dataset)
@@ -100,6 +108,11 @@ def save_dataset(dataset, dataset_filenames, filename=None):
     with open(filename_df, 'w') as f:
         # store the data as binary data stream
         json.dump(dataset_filenames, f)
+
+    filename_standardize = fn_no_extension + '_standardize.npy'
+    with open(filename_standardize, 'wb') as f:
+        np.save(f, mean)
+        np.save(f, std)
 
     filename_wti = fn_no_extension + '_word_to_ix'
     save_feat_word_to_ixs(filename_wti)
@@ -115,9 +128,14 @@ def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
         # read the data as binary data stream
         dataset_filenames = json.load(f)
 
+    filename_standardize = fn_no_extension + '_standardize.npy'
+    with open(filename_standardize, 'rb') as f:
+        mean = np.load(f)
+        std = np.load(f)
+
     filename_wti = fn_no_extension + '_word_to_ix'
-    load_feat_word_to_ixs(filename_wti)
-    return dataset, dataset_filenames
+    word_to_ixs = load_feat_word_to_ixs(filename_wti)
+    return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
 def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None):
@@ -125,12 +143,12 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
         load_filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
     try:
         start_time = time.time()
-        dataset, dataset_filenames = load_dataset(load_filename)
+        dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename)
         print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
-        dataset, dataset_filenames = create_dataset(directory_path, limit)
-    return dataset, dataset_filenames
+        dataset, dataset_filenames, word_to_ixs, norm = create_dataset(directory_path, limit)
+    return dataset, dataset_filenames, word_to_ixs, norm
 
 
 def sort_split_dataset(data, data_filenames, pos_neg_ratio=0.14):

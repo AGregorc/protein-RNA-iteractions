@@ -2,15 +2,14 @@ import torch
 from torch import nn
 
 from Constants import NODE_FEATURES_NAME
-from Preprocess import get_feat_wti_lens
 
 
 class NodeEmbeddingLayer(nn.Module):
 
     def __init__(self, in_feats, out_feats, embedding_dim=5, vocab_sizes=None):
         super(NodeEmbeddingLayer, self).__init__()
-        if vocab_sizes is None:
-            vocab_sizes = get_feat_wti_lens()
+        # if vocab_sizes is None:
+        #     vocab_sizes = get_feat_wti_lens()
 
         self.numerical_cols = [i for i in range(in_feats) if i not in vocab_sizes.keys()]
         self.col_to_embedding = {}

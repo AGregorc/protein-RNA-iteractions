@@ -11,7 +11,7 @@ import Constants
 from groups import a2gs
 
 
-def create_graph_sample(model_structure):
+def create_graph_sample(model_structure, word_to_ixs, lock):
     # protein_atoms, atom_features, labels = get_atoms_features_and_labels(structure)
     protein_chains = label_protein_rna_interactions(model_structure)
     surface = get_surface(protein_chains)
@@ -38,8 +38,7 @@ def create_graph_sample(model_structure):
     # if plot:
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
-    G = create_dgl_graph(pairs, len(protein_atoms), set_edge_features=True, node_features=atom_features,
-                         labels=labels)
+    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True, node_features=atom_features, labels=labels)
     assert G.number_of_nodes() == len(protein_atoms)
 
     #     return Sample(graph=G, atoms=protein_atoms, pairs=pairs, labels=labels)
@@ -262,7 +261,7 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             last_n_residues.append(next(residue_generator, None))
 
 
-def node_features(atom):
+def get_node_features(atom):
     """
         Assign features to a atom.
         All atoms must have the same number of features and the same order.
@@ -318,7 +317,7 @@ def get_atom_features_and_labels(protein_atoms):
 
         setattr(atom, Constants.ATOM_DGL_ID, idx)
 
-        features.append(node_features(atom))
+        features.append(get_node_features(atom))
 
         label = Constants.LABEL_NEGATIVE
         if is_labeled_positive(atom):
@@ -374,73 +373,72 @@ def change_direction_features(np_array):
     return result
 
 
-node_feat_word_to_ixs = {}
-node_feat_wti_lens = {}
+# node_feat_word_to_ixs = {}
 
 
-def save_feat_word_to_ixs(filename):
+def save_feat_word_to_ixs(filename, node_feat_word_to_ixs):
     with open(filename + '.json', 'w') as fp:
         json.dump(node_feat_word_to_ixs, fp)
 
 
 def load_feat_word_to_ixs(filename):
-    global node_feat_word_to_ixs, node_feat_wti_lens
+    word_to_ixs = {}
     with open(filename + '.json', 'r') as fp:
-        node_feat_word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
-
-    node_feat_wti_lens = {}
-    for col in node_feat_word_to_ixs:
-        col = int(col)
-        node_feat_wti_lens[col] = len(node_feat_word_to_ixs[col])
+        word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
+    return word_to_ixs
 
 
-def get_feat_word_to_ixs():
-    return node_feat_word_to_ixs
+# def get_feat_word_to_ixs():
+#     return node_feat_word_to_ixs
 
 
-def get_feat_wti_lens():
-    return node_feat_wti_lens
-
-
-def transform_node_features(features_list):
+def transform_node_features(features_list, node_feat_word_to_ixs, lock):
     """
         As we know from node_features function, node features contain also string elements.
         Here we transform string features to (one-hot) indexes that are suitable for Embedding layers.
 
+    :param node_feat_word_to_ixs:
+    :param lock:
     :param features_list: list of all node features of a graph
     :return: torch tensor transformed features
     """
-    global node_feat_word_to_ixs
     result = np.zeros((len(features_list), len(features_list[0])))
 
+    # lock.acquire()
     dict_copy = [*node_feat_word_to_ixs.keys()]
+    # lock.release()
     for col, feat in enumerate(features_list[0]):
         if isinstance(feat, str):
             if col not in dict_copy:
                 # we have to find columns with strings then.
-                node_feat_word_to_ixs[col] = {}  # init word to ix for each column with strings
                 dict_copy.append(col)  # add column to a copy list too
-                node_feat_wti_lens[col] = 0
+                # lock.acquire()
+                node_feat_word_to_ixs[col] = {}  # init word to ix for each column with strings
+                # lock.release()
         else:
             result[:, col] = [feat[col] for feat in features_list]
 
-    columns = [*node_feat_word_to_ixs.keys()]
-    for col in columns:
+    for col in dict_copy:
         col = int(col)
         for j, feat in enumerate(features_list):
             word = feat[col]
-            if word not in node_feat_word_to_ixs[col]:
-                node_feat_word_to_ixs[col][word] = node_feat_wti_lens[col]
-                node_feat_wti_lens[col] += 1
-            result[j, col] = node_feat_word_to_ixs[col][word]
+            # lock.acquire()
+            with lock:
+                if word not in node_feat_word_to_ixs[col]:
+                    d = node_feat_word_to_ixs[col]
+                    d[word] = len(node_feat_word_to_ixs[col])
+                    node_feat_word_to_ixs[col] = d
+                result[j, col] = node_feat_word_to_ixs[col][word]
+            # lock.release()
 
     return torch.from_numpy(result).to(dtype=torch.float32)
 
 
-def create_dgl_graph(pairs, num_nodes, set_edge_features=False, node_features=None, labels=None):
+def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None, labels=None):
     """
         Our main preprocess function.
 
+    :param lock: multiprocessing lock
     :param pairs: pairs of atoms
     :param num_nodes: sum of all atoms in a graph
     :param set_edge_features: boolean
@@ -474,7 +472,7 @@ def create_dgl_graph(pairs, num_nodes, set_edge_features=False, node_features=No
         G.edata[Constants.EDGE_FEATURE_NAME] = torch.from_numpy(edge_features).to(dtype=torch.float32)
 
     if node_features:
-        G.ndata[Constants.NODE_FEATURES_NAME] = transform_node_features(node_features)
+        G.ndata[Constants.NODE_FEATURES_NAME] = transform_node_features(node_features, node_feat_word_to_ixs, lock)
 
     if labels is not None:
         G.ndata[Constants.LABEL_NODE_NAME] = labels
