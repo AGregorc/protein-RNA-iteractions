@@ -14,7 +14,7 @@ import Constants
 from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
 
-def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None):
+def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None):
     if word_to_ixs is None:
         word_to_ixs = {}
     parser = PDBParser()
@@ -23,7 +23,11 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
     model = structure[0]
     # print(structure)
     # chains = list(model.get_chains())
-    return create_graph_sample(model, word_to_ixs, lock)
+    graph, atoms, pairs, labels = create_graph_sample(model, word_to_ixs, lock)
+    if standardize:
+        numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
+        filename, graph = standardize_graph_process((filename, graph, standardize[0], standardize[1], numerical_cols))
+    return graph, atoms, pairs, labels
 
 
 def create_graph_process(args):
@@ -98,7 +102,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def save_dataset(dataset, dataset_filenames, mean, std, filename=None):
+def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None):
     if filename is None:
         filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(len(dataset)) + Constants.GRAPH_EXTENSION
     save_graphs(filename, dataset)
@@ -111,11 +115,11 @@ def save_dataset(dataset, dataset_filenames, mean, std, filename=None):
 
     filename_standardize = fn_no_extension + '_standardize.npy'
     with open(filename_standardize, 'wb') as f:
-        np.save(f, mean)
-        np.save(f, std)
+        torch.save(mean, f)
+        torch.save(std, f)
 
     filename_wti = fn_no_extension + '_word_to_ix'
-    save_feat_word_to_ixs(filename_wti)
+    save_feat_word_to_ixs(filename_wti, word_to_ixs)
 
 
 def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
@@ -130,8 +134,8 @@ def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
 
     filename_standardize = fn_no_extension + '_standardize.npy'
     with open(filename_standardize, 'rb') as f:
-        mean = np.load(f)
-        std = np.load(f)
+        mean = torch.load(f)
+        std = torch.load(f)
 
     filename_wti = fn_no_extension + '_word_to_ix'
     word_to_ixs = load_feat_word_to_ixs(filename_wti)

@@ -15,13 +15,13 @@ class Net(nn.Module):
     def __init__(self, node_in_feats=NODE_FEATURES_NUM, node_out_feats=16,
                  edge_in_feats=EDGE_FEATURE_NUM, edge_out_feats=8,
                  hidden_conv_sizes=[10], num_classes=2,
-                 dropout_p=0.4, hidden_linear_sizes=[10]):
+                 dropout_p=0.4, hidden_linear_sizes=[10], word_to_ixs=None):
         super(Net, self).__init__()
         assert len(hidden_conv_sizes) > 0
         self.dropout = nn.Dropout(p=dropout_p)
 
         self.edge_layer = EdgeLayer(edge_in_feats, edge_out_feats)
-        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats)
+        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats, word_to_ixs=word_to_ixs)
 
         prev_hidden = node_out_feats + edge_out_feats
         #         print('prev_hidden', prev_hidden)

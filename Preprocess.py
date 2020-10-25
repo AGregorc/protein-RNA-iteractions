@@ -378,7 +378,7 @@ def change_direction_features(np_array):
 
 def save_feat_word_to_ixs(filename, node_feat_word_to_ixs):
     with open(filename + '.json', 'w') as fp:
-        json.dump(node_feat_word_to_ixs, fp)
+        json.dump(node_feat_word_to_ixs.copy(), fp)
 
 
 def load_feat_word_to_ixs(filename):
@@ -422,14 +422,16 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
         col = int(col)
         for j, feat in enumerate(features_list):
             word = feat[col]
-            # lock.acquire()
-            with lock:
-                if word not in node_feat_word_to_ixs[col]:
-                    d = node_feat_word_to_ixs[col]
-                    d[word] = len(node_feat_word_to_ixs[col])
-                    node_feat_word_to_ixs[col] = d
-                result[j, col] = node_feat_word_to_ixs[col][word]
-            # lock.release()
+            if lock:
+                lock.acquire()
+            # with lock:
+            if word not in node_feat_word_to_ixs[col]:
+                d = node_feat_word_to_ixs[col]
+                d[word] = len(node_feat_word_to_ixs[col])
+                node_feat_word_to_ixs[col] = d
+            result[j, col] = node_feat_word_to_ixs[col][word]
+            if lock:
+                lock.release()
 
     return torch.from_numpy(result).to(dtype=torch.float32)
 

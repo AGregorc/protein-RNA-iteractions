@@ -51,13 +51,13 @@ def plot_graph(pairs=None, atoms=None, atom_color_func=lambda atom: None, title=
     plt.show()
 
 
-def plot_from_file(filename, color_func, word_to_ixs):
-    G, atoms, pairs, labels = my_pdb_parser(filename, word_to_ixs)
+def plot_from_file(filename, color_func, word_to_ixs, standardize=None):
+    G, atoms, pairs, labels = my_pdb_parser(filename, word_to_ixs=word_to_ixs, standardize=standardize)
     plot_graph(pairs=pairs, atoms=atoms, atom_color_func=color_func, title=filename)
 
 
-def plot_predicted(filename, model, word_to_ixs):
-    G, atoms, pairs, labels = my_pdb_parser(filename, word_to_ixs)
+def plot_predicted(filename, model, word_to_ixs, standardize=None):
+    G, atoms, pairs, labels = my_pdb_parser(filename, word_to_ixs=word_to_ixs, standardize=standardize)
     logits = model(G)
     logits = logits.cpu()
 
