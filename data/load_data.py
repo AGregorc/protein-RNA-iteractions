@@ -97,7 +97,7 @@ def load_data(start_pdb=0, limit=None):
             try:
                 r = requests.get(URL_RCSB + pdb_filename, allow_redirects=True, timeout=8)
                 open(PDB_DIR + pdb_filename, 'wb').write(r.content)
-                print(f'{pdb_filename} added')
+                # print(f'{pdb_filename} added')
             except TimeoutError as te:
                 continue
 
@@ -110,7 +110,7 @@ def load_data(start_pdb=0, limit=None):
         if not os.path.exists(os.path.join(DSSP_DIR, dssp_filename)):
             result = pdb_to_dssp(os.path.join(PDB_DIR, pdb + '.pdb'), DSSP_REST_URL)
             open(DSSP_DIR + dssp_filename, 'w').write(result)
-            print(f'{dssp_filename} added')
+            # print(f'{dssp_filename} added')
     if i > limit:
         print('\nWe reached limit !!! awwww')
 
