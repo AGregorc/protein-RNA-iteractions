@@ -76,7 +76,7 @@ def load_data(start_pdb=0, limit=None):
         os.makedirs(DSSP_DIR)
 
     pdbs = []
-    with open('pdbs.lst') as f:
+    with open(os.path.join(os.path.dirname(__file__), 'pdbs.lst')) as f:
         for pdb in f:
             pdbs.append(pdb.strip())
 
