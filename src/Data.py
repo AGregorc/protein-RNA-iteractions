@@ -73,7 +73,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     word_to_ixs = manager.dict()
     lock = manager.Lock()
 
-    pool = Pool(processes=Constants.NUM_THREADS)
+    pool = Pool(processes=Constants.NUM_PROCESSES)
     start_time = time.time()
     result = pool.map(create_graph_process, map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
 
@@ -102,12 +102,12 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None):
+def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None):
     if filename is None:
-        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(len(dataset)) + Constants.GRAPH_EXTENSION
+        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
     save_graphs(filename, dataset)
 
-    fn_no_extension = filename.split('.')[0]
+    fn_no_extension = os.path.splitext(filename)[0]
     filename_df = fn_no_extension + '_filenames.json'
     with open(filename_df, 'w') as f:
         # store the data as binary data stream
@@ -122,11 +122,13 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
     save_feat_word_to_ixs(filename_wti, word_to_ixs)
 
 
-def load_dataset(filename=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE):
+def load_dataset(filename=None, length=None):
+    if filename is None:
+        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(length) + Constants.GRAPH_EXTENSION
     dataset = load_graphs(filename)
     dataset = dataset[0]
 
-    fn_no_extension = filename.split('.')[0]
+    fn_no_extension = os.path.splitext(filename)[0]
     filename_df = fn_no_extension + '_filenames.json'
     with open(filename_df, 'r') as f:
         # read the data as binary data stream
@@ -147,7 +149,7 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
         load_filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
     try:
         start_time = time.time()
-        dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename)
+        dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename, length=limit)
         print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')

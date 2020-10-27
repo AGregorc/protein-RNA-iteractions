@@ -4,7 +4,6 @@ from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_
 import matplotlib.pyplot as plt
 
 from Constants import LABEL_NODE_NAME
-from GNN import GeneralModel
 
 
 def calculate_metrics(dataset: list, model, print_model_name: str):

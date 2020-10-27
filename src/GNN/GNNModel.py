@@ -1,4 +1,3 @@
-import gc
 from collections import namedtuple
 
 import dgl
@@ -7,8 +6,6 @@ from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
 from Constants import LABEL_NODE_NAME
-from GNN.GeneralModel import GeneralModel
-from GNN.Net import Net
 
 GCNBatch = namedtuple('GCNBatch', ['graph', 'labels'])
 

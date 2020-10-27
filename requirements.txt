@@ -1,0 +1,10 @@
+biopython==1.76
+dgl-cuda10.1==0.4.3.post2
+matplotlib==3.2.1
+networkx==2.4
+numpy==1.18.4
+scikit-learn==0.22.2.post1
+scipy==1.4.1
+torch==1.4.0
+torchvision==0.5.0
+tqdm==4.45.0

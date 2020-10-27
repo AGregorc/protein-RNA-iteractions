@@ -1,6 +1,5 @@
 from Bio.PDB import Atom
 
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR

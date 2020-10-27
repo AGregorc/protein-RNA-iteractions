@@ -412,9 +412,11 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
             if col not in dict_copy:
                 # we have to find columns with strings then.
                 dict_copy.append(col)  # add column to a copy list too
-                # lock.acquire()
+                if lock:
+                    lock.acquire()
                 node_feat_word_to_ixs[col] = {}  # init word to ix for each column with strings
-                # lock.release()
+                if lock:
+                    lock.release()
         else:
             result[:, col] = [feat[col] for feat in features_list]
 

@@ -1,21 +1,18 @@
-import torch
-from Bio.PDB import DSSP
 from sklearn.model_selection import train_test_split
 
-import Constants
-from Data import create_dataset, load_dataset, save_dataset, get_dataset
+from Data import save_dataset, get_dataset
 from Evaluate import calculate_metrics
 from GNN.GNNModel import GNNModel
 from GNN.Net import Net
 from PlotMPL import plot_from_file, plot_predicted, use_new_window
-from Preprocess import get_labeled_color, save_feat_word_to_ixs
 
 
 def main():
-    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=5)
+    limit = 5
+    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
     # load_filename=Constants.SAVED_GRAPHS_PATH + 'graph_data_2.bin')
 
-    save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize)
+    save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
     # dataset, dataset_filenames = load_dataset()
     train_d, test_d, train_f, test_f = train_test_split(dataset, dataset_filenames, test_size=0.17)
     del dataset, dataset_filenames
