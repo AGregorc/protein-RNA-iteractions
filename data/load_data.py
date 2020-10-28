@@ -8,8 +8,8 @@ from tqdm import tqdm
 URL_RCSB = 'https://files.rcsb.org/view/'
 DSSP_REST_URL = 'https://www3.cmbi.umcn.nl/xssp/'
 
-PDB_DIR = 'pdbs/'
-DSSP_DIR = 'dssp/'
+PDB_DIR = os.path.join(os.path.dirname(__file__), 'pdbs/')
+DSSP_DIR = os.path.join(os.path.dirname(__file__), 'dssp/')
 
 
 def pdb_to_dssp(pdb_file_path, rest_url):

@@ -7,7 +7,7 @@ SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
 DSSP_PATH = DATA_PATH + 'dssp/'
-NUM_PROCESSES = 5
+NUM_PROCESSES = 12
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)

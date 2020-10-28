@@ -32,15 +32,21 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
 
 def create_graph_process(args):
     my_filename, directory_path, word_to_ixs, lock = args
-    # print(f'[{os.getpid()}] got something to work :O')
     start_time = time.time()
-    graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
-    print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
+    try:
+        # print(f'[{os.getpid()}] got something to work :O')
+        graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
+        print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
+    except:
+        print(f'[{os.getpid()}] Error from file {my_filename} {(time.time() - start_time):.1f}s')
+        return my_filename, None
     return my_filename, graph
 
 
 def standardize_graph_process(result):
     filename, graph, mean, std, numerical_cols = result
+    if graph is None:
+        return filename, None
     # numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in get_feat_word_to_ixs().keys()]
 
     graph.ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols] -= mean
@@ -54,22 +60,19 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     manager = Manager()
 
     idx = 0
-    dataset_dict = {}
-    filename_queue = Queue()
+    # dataset_dict = {}
     dataset_filenames = []
 
     for file in os.listdir(directory):
         filename = os.fsdecode(file)
         if filename.endswith(".pdb"):
-            dataset_dict[filename] = idx
-            filename_queue.put(filename)
+            # dataset_dict[filename] = idx
             dataset_filenames.append(filename)
             idx += 1
 
         if limit is not None and idx >= limit:
             break
 
-    dataset = [None] * len(dataset_filenames)
     word_to_ixs = manager.dict()
     lock = manager.Lock()
 
@@ -81,8 +84,13 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     num_for_standardization = min(100, len(result))
     means = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
     variances = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
+    count_errors = 0
     for i in range(num_for_standardization):
-        numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
+        num = i + count_errors
+        if result[num][1] is None:
+            count_errors += 1
+            continue
+        numerical_features = result[num][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
         m = torch.mean(numerical_features, dim=0)
         v = torch.var(numerical_features, dim=0)
         means[i] = m
@@ -90,9 +98,16 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     mean = torch.mean(means, dim=0)
     std = torch.sqrt(torch.mean(variances, dim=0))
 
-    result = pool.map(standardize_graph_process, map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
+    result = pool.map(standardize_graph_process,
+                      map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
+
+    dataset = []
+    dataset_filenames = []
     for filename, graph in result:
-        dataset[dataset_dict[filename]] = graph
+        if graph is None:
+            continue
+        dataset.append(graph)
+        dataset_filenames.append(filename)
 
     print(f'Dataset created in {(time.time() - start_time):.1f}s')
 
