@@ -15,6 +15,8 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     # protein_atoms, atom_features, labels = get_atoms_features_and_labels(structure)
     protein_chains = label_protein_rna_interactions(model_structure)
     surface = get_surface(protein_chains)
+    if len(surface) == 0:
+        raise Exception(f'Len of surface for model {model_structure.full_id[0]} is 0')
     protein_atoms = get_atoms_list(protein_chains)
     generate_node_features(protein_chains, surface)
 
@@ -200,7 +202,13 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             if key not in dssp[0]:
                 key = (key[0], (' ', key[1][1], ' '))
                 if key not in dssp[0]:
-                    print('wtffffffffff, dssp key not found')
+                    for dssp_key in dssp[0]:
+                        if dssp_key[0] == key[0] and dssp_key[1][1] == key[1][1]:
+                            key = dssp_key
+                            break
+
+                    if key not in dssp[0]:
+                        raise Exception(f'DSSP key not found for {key}, model {res.full_id[0]}')
             dssp_features = dssp[0][key]
 
             is_cb = 'CB' in res
