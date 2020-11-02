@@ -7,7 +7,7 @@ SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
 DSSP_PATH = DATA_PATH + 'dssp/'
-NUM_PROCESSES = 12
+NUM_PROCESSES = 1
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -18,7 +18,12 @@ if not os.path.exists(PDB_PATH):
 if not os.path.exists(DSSP_PATH):
     os.makedirs(DSSP_PATH)
 
-GET_ONLY_CA_ATOMS = False
+GET_ONLY_CA_ATOMS = True
+
+if GET_ONLY_CA_ATOMS:
+    ATOM_ATOM_DISTANCE = 5
+else:
+    ATOM_ATOM_DISTANCE = 1.7
 
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
@@ -46,9 +51,11 @@ NODE_APPENDED_FEATURES = {
 
 NODE_GROUP_FEATURES = groups.group_list
 DSSP_FEATURES_NAME = 'dssp_features'
-DSSP_FEATURES_NUM = 14
+DSSP_FEATURES_NUM = 13
 
 NODE_FEATURES_NAME = 'features'
 NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES) + len(NODE_GROUP_FEATURES) + DSSP_FEATURES_NUM
 EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 4
+
+COORDINATES_GRAPH_NAME = 'coordinates'

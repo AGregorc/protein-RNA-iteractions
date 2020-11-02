@@ -2,6 +2,7 @@ import torch
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, mean_squared_error, roc_curve, \
     auc
 import matplotlib.pyplot as plt
+import numpy as np
 
 from Constants import LABEL_NODE_NAME
 
@@ -24,28 +25,42 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
 
     y_pred[logits[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
 
+    fpr, tpr, thresholds = roc_curve(y_true, y_interaction_score, pos_label=1)
+    area_under_curve = auc(fpr, tpr)
+
+    confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
+    optimal_idx = np.argmax(tpr - fpr)
+    optimal_threshold = thresholds[optimal_idx]
+
+    for i in range(2):
+        if print_model_name is not None:
+            print('Measures for {}:'.format(print_model_name))
+            print('Confusion matrix:')
+            print(confusion_mtx)
+            print('F1 score:')
+            print(f1)
+            print('Precision:')
+            print(precision)
+            print('Recall:')
+            print(recall)
+            print('RMSE:')
+            print(rmse)
+            print('Optimal threshold: ')
+            print(optimal_threshold)
+            plot_roc(fpr, tpr, area_under_curve)
+        y_pred = y_interaction_score > optimal_threshold
+        print('And now when predicted is from optimal threshold of only one node')
+        confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
+
+    return confusion_mtx, f1, precision, recall, rmse, optimal_threshold
+
+
+def _get(y_true, y_pred):
     confusion_mtx = confusion_matrix(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='weighted')
     precision = precision_score(y_true, y_pred, average='weighted')
     recall = recall_score(y_true, y_pred, average='weighted')
     rmse = mean_squared_error(y_true, y_pred) ** 0.5
-    fpr, tpr, thresholds = roc_curve(y_true, y_interaction_score, pos_label=1)
-    area_under_curve = auc(fpr, tpr)
-
-    if print_model_name is not None:
-        print('Measures for {}:'.format(print_model_name))
-        print('Confusion matrix:')
-        print(confusion_mtx)
-        print('F1 score:')
-        print(f1)
-        print('Precision:')
-        print(precision)
-        print('Recall:')
-        print(recall)
-        print('RMSE:')
-        print(rmse)
-        plot_roc(fpr, tpr, area_under_curve)
-
     return confusion_mtx, f1, precision, recall, rmse
 
 

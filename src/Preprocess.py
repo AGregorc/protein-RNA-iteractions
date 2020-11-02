@@ -36,18 +36,18 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     #     print(f'Number of atoms without edge: {removed} ({percent:.1f}%)')
     ##############################################################################
 
-    atom_features, labels = get_atom_features_and_labels(protein_atoms)
+    atom_features, labels, positions = get_atom_features_and_labels(protein_atoms)
     # if plot:
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
-    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True, node_features=atom_features, labels=labels)
+    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True, node_features=atom_features, labels=labels, coordinates=positions)
     assert G.number_of_nodes() == len(protein_atoms)
 
     #     return Sample(graph=G, atoms=protein_atoms, pairs=pairs, labels=labels)
     return G, protein_atoms, pairs, labels
 
 
-def find_pairs(atoms, distance=1.7, level='A', do_print=False):
+def find_pairs(atoms, distance=Constants.ATOM_ATOM_DISTANCE, level='A', do_print=False):
     """
         Find pairs of atoms/residues/chains that are closer than specified distance.
         Pairs could represent edges in a graph of atoms.
@@ -63,8 +63,6 @@ def find_pairs(atoms, distance=1.7, level='A', do_print=False):
     if do_print:
         print('Number of pairs:', len(pairs))
 
-    # if do_plot:
-    #     plot_graph(pairs)
     return pairs
 
 
@@ -125,13 +123,14 @@ def get_protein_chains(structure):
     return protein_chains
 
 
-def label_protein_rna_interactions(structure):
+def label_protein_rna_interactions(structure, only_ca=Constants.GET_ONLY_CA_ATOMS):
     """
         Find all protein-RNA atom interactions.
         To do so, we find all pairs where one atom is from protein molecule and the other is from RNA.
         The min pairing distance is defined in Constants.LABEL_ATOM_DISTANCE.
         If the atom is in interaction we set a new attribute (Constants.LABEL_ATTRIBUTE_NAME) and assign it as True.
 
+    :param only_ca:
     :param structure: Bio structure
     :return: list of protein chains
     """
@@ -143,8 +142,16 @@ def label_protein_rna_interactions(structure):
         c1 = a1.get_parent().get_parent()
         c2 = a2.get_parent().get_parent()
         if (c1 in protein_chains) != (c2 in protein_chains):
-            setattr(a1, Constants.LABEL_ATTRIBUTE_NAME, True)
-            setattr(a2, Constants.LABEL_ATTRIBUTE_NAME, True)
+            if only_ca:
+                res1 = a1.get_parent()
+                if 'CA' in res1:
+                    setattr(res1['CA'], Constants.LABEL_ATTRIBUTE_NAME, True)
+                res2 = a2.get_parent()
+                if 'CA' in res2:
+                    setattr(res2['CA'], Constants.LABEL_ATTRIBUTE_NAME, True)
+            else:
+                setattr(a1, Constants.LABEL_ATTRIBUTE_NAME, True)
+                setattr(a2, Constants.LABEL_ATTRIBUTE_NAME, True)
     return protein_chains
 
 
@@ -282,13 +289,10 @@ def get_node_features(atom):
 
     features = [
         atom.mass,
-        # atom.bfactor,
         atom.occupancy,
         atom.element,  # string
         atom.fullname,  # string
         aa,  # string
-        # getattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], Constants.EMPTY_STR_FEATURE), # string
-        # getattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], Constants.EMPTY_STR_FEATURE)  # string
     ]
 
     for feature_name in Constants.NODE_APPENDED_FEATURES:
@@ -301,7 +305,9 @@ def get_node_features(atom):
             features.append(0)
 
     dssp_list = getattr(atom, Constants.DSSP_FEATURES_NAME, [])
-    for f in dssp_list:
+    for i, f in enumerate(dssp_list):
+        if i == 5:
+            continue
         features.append(f)
 
     Constants.NODE_FEATURES_NUM = len(features)
@@ -320,12 +326,14 @@ def get_atom_features_and_labels(protein_atoms):
     :return: features, labels
     """
     features = []
+    positions = np.zeros((len(protein_atoms), 3))
     labels = np.zeros(len(protein_atoms))
     for idx, atom in enumerate(protein_atoms):
 
         setattr(atom, Constants.ATOM_DGL_ID, idx)
 
         features.append(get_node_features(atom))
+        positions[idx, :] = atom.get_coord()
 
         label = Constants.LABEL_NEGATIVE
         if is_labeled_positive(atom):
@@ -333,7 +341,7 @@ def get_atom_features_and_labels(protein_atoms):
         labels[idx] = label
 
     #     print(sum(labels), len(labels), sum(labels) / len(labels))
-    return features, torch.from_numpy(labels).to(dtype=torch.int64)
+    return features, torch.from_numpy(labels).to(dtype=torch.int64), torch.from_numpy(positions)
 
 
 def get_dgl_id(atom):
@@ -446,10 +454,11 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
     return torch.from_numpy(result).to(dtype=torch.float32)
 
 
-def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None, labels=None):
+def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None, labels=None, coordinates=None):
     """
         Our main preprocess function.
 
+    :param node_feat_word_to_ixs: dictionary of word to index dictionaries (for each string feature column)
     :param lock: multiprocessing lock
     :param pairs: pairs of atoms
     :param num_nodes: sum of all atoms in a graph
@@ -485,6 +494,9 @@ def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_fea
 
     if node_features:
         G.ndata[Constants.NODE_FEATURES_NAME] = transform_node_features(node_features, node_feat_word_to_ixs, lock)
+
+    if coordinates is not None:
+        G.ndata[Constants.COORDINATES_GRAPH_NAME] = coordinates
 
     if labels is not None:
         G.ndata[Constants.LABEL_NODE_NAME] = labels

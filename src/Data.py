@@ -52,6 +52,11 @@ def standardize_graph_process(result):
     graph.ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols] -= mean
     graph.ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols] /= std
 
+    # set all NaNs to 0
+    t = graph.ndata[Constants.NODE_FEATURES_NAME]
+    graph.ndata[Constants.NODE_FEATURES_NAME][torch.isnan(t)] = 0.0
+    graph.ndata[Constants.NODE_FEATURES_NAME][torch.isinf(t)] = 0.0
+
     return filename, graph
 
 
@@ -105,6 +110,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     dataset_filenames = []
     for filename, graph in result:
         if graph is None:
+            print(f'{filename} is None')
             continue
         dataset.append(graph)
         dataset_filenames.append(filename)
@@ -119,7 +125,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
 
 def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None):
     if filename is None:
-        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
+        filename = file_name(limit=limit)
     save_graphs(filename, dataset)
 
     fn_no_extension = os.path.splitext(filename)[0]
@@ -139,7 +145,7 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
 
 def load_dataset(filename=None, length=None):
     if filename is None:
-        filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(length) + Constants.GRAPH_EXTENSION
+        filename = file_name(limit=length)
     dataset = load_graphs(filename)
     dataset = dataset[0]
 
@@ -161,7 +167,7 @@ def load_dataset(filename=None, length=None):
 
 def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None):
     if load_filename is None:
-        load_filename = Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE + '_' + str(limit) + Constants.GRAPH_EXTENSION
+        load_filename = file_name(limit=limit)
     try:
         start_time = time.time()
         dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename, length=limit)
@@ -170,6 +176,10 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
         dataset, dataset_filenames, word_to_ixs, norm = create_dataset(directory_path, limit)
     return dataset, dataset_filenames, word_to_ixs, norm
+
+
+def file_name(path_with_default_name=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE, limit=None, only_res=Constants.GET_ONLY_CA_ATOMS):
+    return path_with_default_name + '_' + str(limit) + '_' + ('res_only' if only_res else 'all_atoms') + Constants.GRAPH_EXTENSION
 
 
 def sort_split_dataset(data, data_filenames, pos_neg_ratio=0.14):

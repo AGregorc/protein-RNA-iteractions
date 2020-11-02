@@ -5,6 +5,7 @@ from Evaluate import calculate_metrics
 from GNN.GNNModel import GNNModel
 from GNN.Net import Net
 from PlotMPL import plot_from_file, plot_predicted, use_new_window
+from Preprocess import is_labeled_positive
 
 
 def main():
@@ -26,7 +27,7 @@ def main():
 
     use_new_window()
     #
-    plot_from_file('1a1t.pdb', lambda atom: None, word_to_ixs, standardize=standardize)
+    plot_from_file('1a1t.pdb', lambda atom: is_labeled_positive(atom), word_to_ixs, standardize=standardize)
     plot_predicted('1a1t.pdb', my_model, word_to_ixs, standardize=standardize)
 
     print('press any key to continue ...')
