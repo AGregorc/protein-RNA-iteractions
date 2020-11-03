@@ -1,27 +1,44 @@
 import json
+import time
 from collections import deque
 
 import dgl
 import numpy as np
 import torch
 from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector, make_dssp_dict
-from Bio.PDB.ResidueDepth import residue_depth
 
 import Constants
 from groups import a2gs
 
 
 def create_graph_sample(model_structure, word_to_ixs, lock):
-    # protein_atoms, atom_features, labels = get_atoms_features_and_labels(structure)
+    # start = time.time()
     protein_chains = label_protein_rna_interactions(model_structure)
+    # end = time.time()
+    # print(f'label_protein_rna_interactions: {end - start}')
+    # start = end
     surface = get_surface(protein_chains)
+    # end = time.time()
+    # print(f'get_surface: {end - start}')
+    # start = end
     if len(surface) == 0:
         raise Exception(f'Len of surface for model {model_structure.full_id[0]} is 0')
+
     protein_atoms = get_atoms_list(protein_chains)
+
+    # end = time.time()
+    # print(f'get_atoms_list: {end - start}')
+    # start = time.time()
     generate_node_features(protein_chains, surface)
 
+    # end = time.time()
+    # print(f'generate_node_features: {end - start}')
+    # start = end
     pairs = find_pairs(protein_atoms)
 
+    # end = time.time()
+    # print(f'find_pairs: {end - start}')
+    # start = end
     ##############################################################################
     # atoms_with_edge = set()
     # for a1, a2 in pairs:
@@ -37,13 +54,20 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     ##############################################################################
 
     atom_features, labels, positions = get_atom_features_and_labels(protein_atoms)
+
+    # end = time.time()
+    # print(f'get_atom_features_and_labels: {end - start}')
+    # start = end
     # if plot:
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
-    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True, node_features=atom_features, labels=labels, coordinates=positions)
+    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True,
+                         node_features=atom_features, labels=labels, coordinates=positions)
     assert G.number_of_nodes() == len(protein_atoms)
 
-    #     return Sample(graph=G, atoms=protein_atoms, pairs=pairs, labels=labels)
+    # end = time.time()
+    # print(f'create_dgl_graph: {end - start}')
+
     return G, protein_atoms, pairs, labels
 
 
@@ -186,11 +210,29 @@ def min_dist(coord, surface):
     return np.sqrt(d2[idx]), idx
 
 
+def residue_depth(residue, surface):
+    dist_list = []
+    distance = 0
+    for atom in residue.get_atoms():
+        coord = atom.get_coord()
+        d, idx = min_dist(coord, surface)
+        distance += d
+        dist_list.append((d, idx))
+    return distance / len(dist_list), dist_list
+
+
 def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
+    start = time.time()
     pdb_id = protein_chains[0].get_parent().full_id[0]
     dssp = make_dssp_dict(Constants.DSSP_PATH + pdb_id + '.dssp')
+    end = time.time()
+    print(f'make_dssp_dict: {end - start}')
+    get_residues_t = dssp_key_t = min_dist_t = residue_depth_t = atom_d_t = settattr_t = 0
+
     for chain in protein_chains:
+        start = time.time()
         residue_generator = chain.get_residues()
+        get_residues_t += time.time() - start
 
         last_n_residues = deque([None, next(residue_generator), next(residue_generator, None)])
         while last_n_residues[1] is not None:
@@ -205,6 +247,7 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             if next_res is not None:
                 next_res_name = next_res.resname
 
+            start = time.time()
             key = res.full_id[2:]
             if key not in dssp[0]:
                 key = (key[0], (' ', key[1][1], ' '))
@@ -217,7 +260,9 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                     if key not in dssp[0]:
                         raise Exception(f'DSSP key not found for {key}, model {res.full_id[0]}')
             dssp_features = dssp[0][key]
+            dssp_key_t += time.time() - start
 
+            start = time.time()
             is_cb = 'CB' in res
             cb_ca_surf_angle = 0
             ca_cb_surf_angle = 0
@@ -233,8 +278,10 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 cb_d, cb_surf_idx = min_dist(res['CB'].get_coord(), surface)
                 cb_ca_surf_angle = calc_angle(cb_vec, ca_vec, Vector(surface[ca_surf_idx]))
                 ca_cb_surf_angle = calc_angle(ca_vec, cb_vec, Vector(surface[cb_surf_idx]))
+            min_dist_t += time.time() - start
 
-            res_d = residue_depth(res, surface)
+            start = time.time()
+            res_d, dist_list = residue_depth(res, surface)
             if res_d is None:
                 res_d = 5.0
                 print("Nan values!!!")
@@ -242,14 +289,16 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
             if ca_d is None:
                 ca_d = 5.0
                 print("Nan values!!!")
+            residue_depth_t += time.time() - start
 
-            for atom in res.get_atoms():
+            for idx, atom in enumerate(res.get_atoms()):
                 if only_ca:
                     atom = ca_atom
 
-                atom_d, s_idx = min_dist(atom.get_coord(), surface)
+                start = time.time()
+                atom_d, s_idx = dist_list[idx]
                 d = atom.get_coord() - ca_atom.get_coord()
-                ca_atom_dist = np.sqrt(np.sum(d*d))
+                ca_atom_dist = np.sqrt(np.sum(d * d))
                 atom_ca_surf_angle = 0
                 ca_atom_surf_angle = 0
                 if not np.array_equal(atom.get_coord(), ca_atom.get_coord()):
@@ -259,6 +308,9 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 if atom_d is None:
                     atom_d = 5.0
                     print(f"Nan valuess!! {atom_d}, {atom}")
+                atom_d_t += time.time() - start
+
+                start = time.time()
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['prev_res_name'], prev_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['next_res_name'], next_res_name)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['residue_depth'], res_d)
@@ -270,10 +322,13 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['atom_ca_surf_angle'], atom_ca_surf_angle)
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_atom_surf_angle'], ca_atom_surf_angle)
                 setattr(atom, Constants.DSSP_FEATURES_NAME, dssp_features)
-
+                settattr_t += time.time() - start
                 if only_ca:
                     break
             last_n_residues.append(next(residue_generator, None))
+
+    # print(f'Times: get_residues_t: {get_residues_t:.2f}, dssp_key_t: {dssp_key_t:.2f}, min_dist_t: {min_dist_t:.2f}, '
+    #       f'residue_depth_t: {residue_depth_t:.2f}, atom_d_t: {atom_d_t:.2f}, settattr_t: {settattr_t:.2f}')
 
 
 def get_node_features(atom):
@@ -454,7 +509,8 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
     return torch.from_numpy(result).to(dtype=torch.float32)
 
 
-def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None, labels=None, coordinates=None):
+def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None,
+                     labels=None, coordinates=None):
     """
         Our main preprocess function.
 
