@@ -25,19 +25,18 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
         raise Exception(f'Len of surface for model {model_structure.full_id[0]} is 0')
 
     protein_atoms = get_atoms_list(protein_chains)
-
     # end = time.time()
     # print(f'get_atoms_list: {end - start}')
     # start = time.time()
-    generate_node_features(protein_chains, surface)
 
-    # end = time.time()
-    # print(f'generate_node_features: {end - start}')
-    # start = end
-    pairs = find_pairs(protein_atoms)
-
+    pairs, ns_object = find_pairs(protein_atoms)
     # end = time.time()
     # print(f'find_pairs: {end - start}')
+    # start = end
+
+    generate_node_features(protein_chains, surface, ns_object)
+    # end = time.time()
+    # print(f'generate_node_features: {end - start}')
     # start = end
     ##############################################################################
     # atoms_with_edge = set()
@@ -87,7 +86,7 @@ def find_pairs(atoms, distance=Constants.ATOM_ATOM_DISTANCE, level='A', do_print
     if do_print:
         print('Number of pairs:', len(pairs))
 
-    return pairs
+    return pairs, ns
 
 
 def get_atoms_list(protein_chains, only_ca=Constants.GET_ONLY_CA_ATOMS):
@@ -160,7 +159,7 @@ def label_protein_rna_interactions(structure, only_ca=Constants.GET_ONLY_CA_ATOM
     """
     protein_chains = get_protein_chains(structure)
 
-    pairs = find_pairs(list(structure.get_atoms()), distance=Constants.LABEL_ATOM_DISTANCE)
+    pairs, _ = find_pairs(list(structure.get_atoms()), distance=Constants.LABEL_ATOM_DISTANCE)
     for pair in pairs:
         a1, a2 = pair
         c1 = a1.get_parent().get_parent()
@@ -221,7 +220,16 @@ def residue_depth(residue, surface):
     return distance / len(dist_list), dist_list
 
 
-def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
+def num_of_atoms_above_plane(n, x, atoms):
+    d = np.dot(n, x)
+    st = 0
+    for atom in atoms:
+        if np.dot(atom.get_coord(), n) > d:
+            st += 1
+    return st
+
+
+def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=Constants.GET_ONLY_CA_ATOMS):
     pdb_id = protein_chains[0].get_parent().full_id[0]
     dssp = make_dssp_dict(Constants.DSSP_PATH + pdb_id + '.dssp')
     get_residues_t = dssp_key_t = min_dist_t = residue_depth_t = atom_d_t = settattr_t = 0
@@ -294,11 +302,14 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
 
                 start = time.time()
                 atom_d, s_idx = dist_list[idx]
-                d = atom.get_coord() - ca_atom.get_coord()
+                atom_coord = atom.get_coord()
+                ca_atom_coord = ca_atom.get_coord()
+
+                d = atom_coord - ca_atom_coord
                 ca_atom_dist = np.sqrt(np.sum(d * d))
                 atom_ca_surf_angle = 0
                 ca_atom_surf_angle = 0
-                if not np.array_equal(atom.get_coord(), ca_atom.get_coord()):
+                if not np.array_equal(atom_coord, ca_atom_coord):
                     atom_ca_surf_angle = calc_angle(atom.get_vector(), ca_vec, Vector(surface[s_idx]))
                     ca_atom_surf_angle = calc_angle(ca_vec, atom.get_vector(), Vector(surface[s_idx]))
 
@@ -320,6 +331,16 @@ def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_C
                 setattr(atom, Constants.NODE_APPENDED_FEATURES['ca_atom_surf_angle'], ca_atom_surf_angle)
                 setattr(atom, Constants.DSSP_FEATURES_NAME, dssp_features)
                 settattr_t += time.time() - start
+
+                for num, radius in enumerate(Constants.NEIGHBOR_SUM_RADIUS):
+                    atoms = ns.search(atom_coord, radius)
+                    setattr(atom, Constants.NODE_APPENDED_FEATURES[Constants.neighbor_sum_radius_name(num)], len(atoms))
+
+                    num_above_plane = num_of_atoms_above_plane(surface[s_idx] - atom_coord, atom_coord, atoms)
+                    setattr(atom,
+                            Constants.NODE_APPENDED_FEATURES[Constants.neighbor_sum_above_plane_radius_name(num)],
+                            num_above_plane)
+
                 if only_ca:
                     break
             last_n_residues.append(next(residue_generator, None))

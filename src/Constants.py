@@ -7,7 +7,7 @@ SAVED_GRAPHS_PATH_DEFAULT_FILE = SAVED_GRAPHS_PATH + 'graph_data'
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = DATA_PATH + 'pdbs/'
 DSSP_PATH = DATA_PATH + 'dssp/'
-NUM_PROCESSES = 1
+NUM_PROCESSES = 10
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -18,7 +18,7 @@ if not os.path.exists(PDB_PATH):
 if not os.path.exists(DSSP_PATH):
     os.makedirs(DSSP_PATH)
 
-GET_ONLY_CA_ATOMS = True
+GET_ONLY_CA_ATOMS = False
 
 if GET_ONLY_CA_ATOMS:
     ATOM_ATOM_DISTANCE = 5
@@ -48,6 +48,22 @@ NODE_APPENDED_FEATURES = {
     'atom_ca_surf_angle': 'atom_ca_surf_angle',
     'ca_atom_surf_angle': 'ca_atom_surf_angle',
 }
+
+
+def neighbor_sum_radius_name(idx):
+    return 'neighbor_sum_radius_' + str(NEIGHBOR_SUM_RADIUS[idx])
+
+
+def neighbor_sum_above_plane_radius_name(idx):
+    return 'neighbor_sum_radius_above_plane_' + str(NEIGHBOR_SUM_RADIUS[idx])
+
+
+NEIGHBOR_SUM_RADIUS = [1.5, 2, 4, 6, 8, 10]
+for num in range(len(NEIGHBOR_SUM_RADIUS)):
+    name = neighbor_sum_radius_name(num)
+    NODE_APPENDED_FEATURES[name] = name
+    name_ap = neighbor_sum_above_plane_radius_name(num)
+    NODE_APPENDED_FEATURES[name_ap] = name_ap
 
 NODE_GROUP_FEATURES = groups.group_list
 DSSP_FEATURES_NAME = 'dssp_features'
