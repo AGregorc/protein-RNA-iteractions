@@ -222,11 +222,8 @@ def residue_depth(residue, surface):
 
 
 def generate_node_features(protein_chains, surface, only_ca=Constants.GET_ONLY_CA_ATOMS):
-    start = time.time()
     pdb_id = protein_chains[0].get_parent().full_id[0]
     dssp = make_dssp_dict(Constants.DSSP_PATH + pdb_id + '.dssp')
-    end = time.time()
-    print(f'make_dssp_dict: {end - start}')
     get_residues_t = dssp_key_t = min_dist_t = residue_depth_t = atom_d_t = settattr_t = 0
 
     for chain in protein_chains:
@@ -474,6 +471,7 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
     :return: torch tensor transformed features
     """
     result = np.zeros((len(features_list), len(features_list[0])))
+    start_f = time.time()
 
     # lock.acquire()
     dict_copy = [*node_feat_word_to_ixs.keys()]
@@ -491,21 +489,38 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
         else:
             result[:, col] = [feat[col] for feat in features_list]
 
+    # end = time.time()
+    # print(f'check cols: {end - start_f:.2f}')
+    # new_dict_t = assert_result_t = 0
+
     for col in dict_copy:
         col = int(col)
+        col_word_to_ixs = node_feat_word_to_ixs[col]
         for j, feat in enumerate(features_list):
             word = feat[col]
-            if lock:
-                lock.acquire()
             # with lock:
-            if word not in node_feat_word_to_ixs[col]:
-                d = node_feat_word_to_ixs[col]
-                d[word] = len(node_feat_word_to_ixs[col])
-                node_feat_word_to_ixs[col] = d
-            result[j, col] = node_feat_word_to_ixs[col][word]
-            if lock:
-                lock.release()
+            # start = time.time()
+            if word not in col_word_to_ixs:
 
+                if lock:
+                    lock.acquire()
+                d = col_word_to_ixs
+                d[word] = len(col_word_to_ixs)
+
+                node_feat_word_to_ixs[col] = d
+                if lock:
+                    lock.release()
+
+                col_word_to_ixs = node_feat_word_to_ixs[col]
+
+            # new_dict_t += time.time() - start
+            # start = time.time()
+            result[j, col] = col_word_to_ixs[word]
+
+            # assert_result_t += time.time() - start
+
+    # end = time.time()
+    # print(f'fill string features: {end - start_f:.2f}, new_dict_t: {new_dict_t:.2f}, assert_result_t: {assert_result_t:.2f}')
     return torch.from_numpy(result).to(dtype=torch.float32)
 
 
@@ -514,6 +529,7 @@ def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_fea
     """
         Our main preprocess function.
 
+    :param coordinates: TODO
     :param node_feat_word_to_ixs: dictionary of word to index dictionaries (for each string feature column)
     :param lock: multiprocessing lock
     :param pairs: pairs of atoms

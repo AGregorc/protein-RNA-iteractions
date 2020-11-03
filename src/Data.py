@@ -100,8 +100,8 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
         v = torch.var(numerical_features, dim=0)
         means[i] = m
         variances[i] = v
-    mean = torch.mean(means, dim=0)
-    std = torch.sqrt(torch.mean(variances, dim=0))
+    mean = torch.mean(means, dim=0, dtype=torch.float32)
+    std = torch.sqrt(torch.mean(variances, dim=0, dtype=torch.float32))
 
     result = pool.map(standardize_graph_process,
                       map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
