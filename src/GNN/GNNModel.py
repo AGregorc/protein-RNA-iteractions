@@ -24,7 +24,8 @@ class GNNModel:
 
     def __call__(self, graph):
         graph = graph.to(self.device)
-        return self.net(graph)
+        _, logits = self.net(graph)
+        return logits
 
     def get_name(self):
         return self.__class__.__name__
@@ -63,7 +64,7 @@ class GNNModel:
             for step, batch in enumerate(train_loader):
                 g = batch.graph.to(self.device)
 
-                logits = self.net(g)
+                logits = self(g)
 
                 logp = F.log_softmax(logits, 1)
                 #         print(logp, batch.labels)
@@ -89,6 +90,6 @@ class GNNModel:
         with torch.no_grad():
             for g in dataset:
                 g = g.to(self.device)
-                logits = self.net(g)
+                logits = self(g)
                 result = torch.cat((result, logits.cpu()), 0)
         return result
