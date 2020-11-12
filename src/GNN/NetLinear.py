@@ -6,7 +6,7 @@ from torch.nn import Linear
 
 
 class NetLinear(nn.Module):
-    def __init__(self, in_features=16 + 8, out_features=2,
+    def __init__(self, in_features=64 + 8, out_features=2,
                  dropout_p=0.4, hidden_linear_sizes=None):
         super(NetLinear, self).__init__()
 

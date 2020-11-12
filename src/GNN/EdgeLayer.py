@@ -13,9 +13,13 @@ class EdgeLayer(nn.Module):
         super(EdgeLayer, self).__init__()
         self.linear = nn.Linear(in_feats, out_feats)
 
-    def forward(self, g, features=None):
-        if features is None:
-            features = g.edata[EDGE_FEATURE_NAME]
+    def forward(self, g_and_features):
+        if type(g_and_features) is tuple:
+            g, _ = g_and_features
+        else:
+            g = g_and_features
+
+        features = g.edata[EDGE_FEATURE_NAME]
         # Creating a local scope so that all the stored ndata and edata
         # (such as the `'h'` ndata below) are automatically popped out
         # when the scope exits.

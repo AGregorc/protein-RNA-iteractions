@@ -10,7 +10,7 @@ from GNN.NetLinear import NetLinear
 
 
 class NetFirstLinearThenGraphConv(nn.Module):
-    def __init__(self, in_features=16 + 8, out_features=2,
+    def __init__(self, in_features=64 + 8, out_features=2,
                  hidden_conv_sizes=None,
                  dropout_p=0.4, hidden_linear_sizes=None):
         super(NetFirstLinearThenGraphConv, self).__init__()

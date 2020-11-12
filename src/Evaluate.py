@@ -57,9 +57,9 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
 
 def _get(y_true, y_pred):
     confusion_mtx = confusion_matrix(y_true, y_pred)
-    f1 = f1_score(y_true, y_pred, average='weighted')
-    precision = precision_score(y_true, y_pred, average='weighted')
-    recall = recall_score(y_true, y_pred, average='weighted')
+    f1 = f1_score(y_true, y_pred, average='weighted', zero_division=1)
+    precision = precision_score(y_true, y_pred, average='weighted', zero_division=1)
+    recall = recall_score(y_true, y_pred, average='weighted', zero_division=1)
     rmse = mean_squared_error(y_true, y_pred) ** 0.5
     return confusion_mtx, f1, precision, recall, rmse
 

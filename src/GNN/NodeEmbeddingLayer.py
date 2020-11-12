@@ -22,9 +22,13 @@ class NodeEmbeddingLayer(nn.Module):
 
         self.linear = nn.Linear(self.emb_size, out_feats)
 
-    def forward(self, g, features=None):
-        if features is None:
-            features = g.ndata[NODE_FEATURES_NAME]
+    def forward(self, g_and_features):
+        if type(g_and_features) is tuple:
+            g, _ = g_and_features
+        else:
+            g = g_and_features
+
+        features = g.ndata[NODE_FEATURES_NAME]
 
         result = features[:, self.numerical_cols]
         for col, embedding in self.col_to_embedding.items():
