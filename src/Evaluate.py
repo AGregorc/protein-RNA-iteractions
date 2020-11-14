@@ -7,6 +7,19 @@ import numpy as np
 from Constants import LABEL_NODE_NAME
 
 
+def predict(net, dataset):
+    net.eval()
+    result = torch.empty(0, 2)
+    device = next(net.parameters()).device
+
+    with torch.no_grad():
+        for g in dataset:
+            g = g.to(device)
+            logits = net(g)
+            result = torch.cat((result, logits.cpu()), 0)
+    return result
+
+
 def calculate_metrics(dataset: list, model, print_model_name: str):
     """
         Final metrics to compare different models
@@ -15,15 +28,16 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
     :param print_model_name: to print model name
     :return: accuracy, precision, recall, f1 scores
     """
-    y_true = dataset[0].ndata[LABEL_NODE_NAME]
+    model.eval()
+    y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
     for graph in dataset[1:]:
-        y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME]), dim=0)
+        y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
     y_true = y_true.cpu()
-    logits = model.predict(dataset)
-    y_interaction_score = logits[:, 1]
-    y_pred = logits.argmax(dim=1)
+    output = predict(model, dataset)
+    y_interaction_score = output[:, 1]
+    y_pred = output.argmax(dim=1)
 
-    y_pred[logits[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
+    y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
 
     fpr, tpr, thresholds = roc_curve(y_true, y_interaction_score, pos_label=1)
     area_under_curve = auc(fpr, tpr)
@@ -49,7 +63,7 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
             print(area_under_curve)
             print('Optimal threshold: ')
             print(optimal_threshold)
-            plot_roc(fpr, tpr, area_under_curve)
+            plot_roc(fpr, tpr, area_under_curve, optimal_idx)
         y_pred = y_interaction_score > optimal_threshold
         print('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
@@ -75,12 +89,13 @@ def _get(y_true, y_pred):
     return confusion_mtx, f1, precision, recall, rmse
 
 
-def plot_roc(fpr, tpr, roc_auc):
+def plot_roc(fpr, tpr, roc_auc, threshold_idx):
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange',
              lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.plot(fpr[threshold_idx], tpr[threshold_idx])
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
