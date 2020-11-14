@@ -8,6 +8,7 @@ from Evaluate import calculate_metrics
 from GNN.GNNModel import GNNModel
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
+from GNN.NetSequenceWrapper import NetSequenceWrapper
 from PlotMPL import plot_from_file, plot_predicted, use_new_window
 from Preprocess import is_labeled_positive
 
@@ -19,7 +20,7 @@ def main():
 
     save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
     # dataset, dataset_filenames = load_dataset()
-    train_d, test_d, train_f, test_f = train_test_split(dataset, dataset_filenames, test_size=0.17)
+    train_d, test_d, train_f, test_f = train_test_split(dataset, dataset_filenames, test_size=0.22)
     del dataset, dataset_filenames
 
     net = nn.Sequential(
@@ -29,7 +30,7 @@ def main():
     my_model = GNNModel(net)
     #
     criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 8.5], device=my_model.device))
-    my_model.train(train_d, criterion=criterion, batch_size=5, epochs=30)
+    my_model.train(train_d, test_d, criterion=criterion, batch_size=5, epochs=30)
     #
     calculate_metrics(test_d, my_model, my_model.get_name())
 
