@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import dgl
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
@@ -25,6 +26,7 @@ class GNNModel:
     def __call__(self, graph):
         graph = graph.to(self.device)
         _, logits = self.net(graph)
+        # out = logits.softmax(1)
         return logits
 
     def get_name(self):
@@ -37,51 +39,61 @@ class GNNModel:
     @staticmethod
     def batcher(device):
         def batcher_dev(batch):
-            batch_trees = dgl.batch(batch)
+            batch_trees = dgl.batch(batch).to(device)
             return GCNBatch(graph=batch_trees,
-                            labels=batch_trees.ndata[LABEL_NODE_NAME].to(device))
+                            labels=batch_trees.ndata[LABEL_NODE_NAME])
 
         return batcher_dev
 
-    def train(self, dataset, lr=0.09, loss_weights=None, weight_decay=1e-4, epochs=10, batch_size=1):
+    def _epoch(self, dataLoader):
+
+
+    def train(self, dataset, val_dataset, optimizer=None, criterion=None, epochs=10, batch_size=1, print_step=10):
         self.net.train()
-        if loss_weights is None:
-            loss_weights = [1.0, 1.0]
-        if type(loss_weights) == list:
-            loss_weights = torch.FloatTensor(loss_weights).to(self.device)
-        assert loss_weights.shape[0] == 2
+
+        # Collects per-epoch loss and acc.
+        history = {
+            'loss': [],
+            'val_loss': [],
+            'acc': [],
+            'val_acc': []}
 
         train_loader = DataLoader(dataset=dataset,
                                   batch_size=batch_size,
                                   collate_fn=self.batcher(self.device))
-        # create the optimizer
-        optimizer = torch.optim.Adagrad(self.net.parameters(),
-                                        lr=lr,
-                                        weight_decay=weight_decay)
+
+        val_loader = DataLoader(dataset=val_dataset,
+                                batch_size=batch_size,
+                                collate_fn=self.batcher(self.device))
+
+        if optimizer is None:
+            # create the optimizer
+            optimizer = torch.optim.Adagrad(self.net.parameters(),
+                                            lr=0.09,
+                                            weight_decay=1e-4)
+        if criterion is None:
+            criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=self.device))
 
         # training loop
         for epoch in range(epochs):
             for step, batch in enumerate(train_loader):
-                g = batch.graph.to(self.device)
-
-                logits = self(g)
-
-                logp = F.log_softmax(logits, 1)
-                #         print(logp, batch.labels)
-                # we only compute loss for labeled nodes
-                loss = F.nll_loss(logp, batch.labels, weight=loss_weights)
+                g = batch.graph
 
                 optimizer.zero_grad()
+                outputs = self(g)
+                loss = criterion(outputs, batch.labels)
+
                 if torch.isnan(loss).any():
                     print(f'Loss is NAN at step: {step}')
                     continue
                 loss.backward()
                 optimizer.step()
 
-                pred = torch.argmax(logits, 1)
+                pred = torch.argmax(outputs, 1)
                 acc = float(torch.sum(torch.eq(batch.labels, pred))) / len(batch.labels)
-                print("Epoch {:05d} | Step {:05d} | Loss {:.4f} | Acc {:.4f} |".format(
-                    epoch, step, loss.item(), acc))
+                if step % print_step == 0:
+                    print("Epoch {:05d} | Step {:05d} | Loss {:.4f} | Acc {:.4f} |".format(
+                        epoch, step, loss.item(), acc))
 
     def predict(self, dataset):
         self.net.eval()

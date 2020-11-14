@@ -45,6 +45,8 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
             print(recall)
             print('RMSE:')
             print(rmse)
+            print('AUC:')
+            print(area_under_curve)
             print('Optimal threshold: ')
             print(optimal_threshold)
             plot_roc(fpr, tpr, area_under_curve)
@@ -52,7 +54,16 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
         print('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
 
-    return confusion_mtx, f1, precision, recall, rmse, optimal_threshold
+    result = {
+        'confusion_matrix': confusion_mtx,
+        'f1': f1,
+        'precision': precision,
+        'recall': recall,
+        'rmse': rmse,
+        'auc': area_under_curve,
+        'optimal_threshold': optimal_threshold,
+    }
+    return result
 
 
 def _get(y_true, y_pred):

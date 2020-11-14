@@ -1,3 +1,4 @@
+import torch
 from sklearn.model_selection import train_test_split
 import torch.nn as nn
 
@@ -27,7 +28,8 @@ def main():
     )
     my_model = GNNModel(net)
     #
-    my_model.train(train_d, loss_weights=[1.0, 8.6], batch_size=5, epochs=30)
+    criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 8.5], device=my_model.device))
+    my_model.train(train_d, criterion=criterion, batch_size=5, epochs=30)
     #
     calculate_metrics(test_d, my_model, my_model.get_name())
 
