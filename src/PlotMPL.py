@@ -57,7 +57,9 @@ def plot_from_file(filename, color_func, word_to_ixs, standardize=None):
 
 def plot_predicted(filename, model, word_to_ixs, standardize=None):
     G, atoms, pairs, labels = my_pdb_parser(filename, word_to_ixs=word_to_ixs, standardize=standardize)
-    logits = model(G)
+    device = next(model.parameters()).device
+
+    logits = model(G.to(device))
     logits = logits.cpu()
 
     def get_predicted_color(atom):

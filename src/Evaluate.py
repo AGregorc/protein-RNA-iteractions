@@ -95,7 +95,7 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx):
     plt.plot(fpr, tpr, color='darkorange',
              lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-    plt.plot(fpr[threshold_idx], tpr[threshold_idx])
+    plt.plot(fpr[threshold_idx], tpr[threshold_idx], marker='o', color='black')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')

@@ -1,4 +1,5 @@
 import torch
+from ignite.handlers import Checkpoint
 from sklearn.model_selection import train_test_split
 import torch.nn as nn
 
@@ -14,7 +15,7 @@ from Preprocess import is_labeled_positive
 
 
 def main():
-    limit = 5
+    limit = 500
     dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
     # load_filename=Constants.SAVED_GRAPHS_PATH + 'graph_data_2.bin')
 
@@ -28,6 +29,10 @@ def main():
         InitialDataLayer(word_to_ixs=word_to_ixs),
         NetFirstGraphConvThenLinear(hidden_conv_sizes=[32], hidden_linear_sizes=[128, 128, 64, 64, 32, 16], dropout_p=0.5)
     )
+    # to_load = {'model': net}
+    # checkpoint_fp = "../data/models/best/best_model_364_loss=-0.3888.pt"
+    # checkpoint = torch.load(checkpoint_fp)
+    # Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
     #
     criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 8.5], device=device))
     run(net, train_d, test_d, criterion=criterion, batch_size=5, epochs=1000, log_dir='/tmp/tensorboard_logs/')
