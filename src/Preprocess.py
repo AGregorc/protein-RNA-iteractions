@@ -221,11 +221,10 @@ def residue_depth(residue, surface):
 
 
 def num_of_atoms_above_plane(n, x, atoms):
+    if len(atoms) == 0:
+        return 0
     d = np.dot(n, x)
-    st = 0
-    for atom in atoms:
-        if np.dot(atom.get_coord(), n) > d:
-            st += 1
+    st = np.sum(np.dot(np.array(list(map(lambda m: m.get_coord(), atoms))), n) > d)
     return st
 
 
@@ -332,15 +331,27 @@ def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=
                 setattr(atom, Constants.DSSP_FEATURES_NAME, dssp_features)
                 settattr_t += time.time() - start
 
-                for num, radius in enumerate(Constants.NEIGHBOR_SUM_RADIUS):
+                for num, radius in enumerate(Constants.NEIGHBOUR_SUM_RADIUS):
                     atoms = ns.search(atom_coord, radius)
-                    setattr(atom, Constants.NODE_APPENDED_FEATURES[Constants.neighbor_sum_radius_name(num)], len(atoms))
+                    setattr(atom, Constants.NODE_APPENDED_FEATURES[Constants.neighbour_sum_radius_name(num)], len(atoms))
 
                     num_above_plane = num_of_atoms_above_plane(surface[s_idx] - atom_coord, atom_coord, atoms)
                     setattr(atom,
-                            Constants.NODE_APPENDED_FEATURES[Constants.neighbor_sum_above_plane_radius_name(num)],
+                            Constants.NODE_APPENDED_FEATURES[Constants.neighbour_sum_above_plane_radius_name(num)],
                             num_above_plane)
 
+                    for atom_element in Constants.NEIGHBOUR_SUM_RADIUS_ATOMS:
+                        atoms_one_element = list(filter(lambda a: a.element.upper() == atom_element.upper(), atoms))
+                        setattr(atom,
+                                Constants.NODE_APPENDED_FEATURES[Constants.neighbour_sum_radius_name(num, atom_element)],
+                                len(atoms_one_element))
+
+                        num_above_plane = num_of_atoms_above_plane(surface[s_idx] - atom_coord,
+                                                                   atom_coord,
+                                                                   atoms_one_element)
+                        setattr(atom,
+                                Constants.NODE_APPENDED_FEATURES[Constants.neighbour_sum_above_plane_radius_name(num, atom_element)],
+                                num_above_plane)
                 if only_ca:
                     break
             last_n_residues.append(next(residue_generator, None))

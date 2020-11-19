@@ -51,20 +51,33 @@ NODE_APPENDED_FEATURES = {
 }
 
 
-def neighbor_sum_radius_name(idx):
-    return 'neighbor_sum_radius_' + str(NEIGHBOR_SUM_RADIUS[idx])
+def neighbour_sum_radius_name(idx, atom=None):
+    if atom is None:
+        return 'neighbour_sum_radius_' + str(NEIGHBOUR_SUM_RADIUS[idx])
+    else:
+        return 'neighbour_sum_radius_' + str(atom) + '_' + str(NEIGHBOUR_SUM_RADIUS[idx])
 
 
-def neighbor_sum_above_plane_radius_name(idx):
-    return 'neighbor_sum_radius_above_plane_' + str(NEIGHBOR_SUM_RADIUS[idx])
+def neighbour_sum_above_plane_radius_name(idx, atom=None):
+    if atom is None:
+        return 'neighbour_sum_radius_above_plane_' + str(NEIGHBOUR_SUM_RADIUS[idx])
+    else:
+        return 'neighbour_sum_radius_' + str(atom) + 'above_plane' + str(NEIGHBOUR_SUM_RADIUS[idx])
 
 
-NEIGHBOR_SUM_RADIUS = [1.5, 2, 4, 6, 8, 10]
-for num in range(len(NEIGHBOR_SUM_RADIUS)):
-    name = neighbor_sum_radius_name(num)
+NEIGHBOUR_SUM_RADIUS = [1.5, 2, 4, 6, 8, 10]
+NEIGHBOUR_SUM_RADIUS_ATOMS = ['C', 'H', 'N', 'O']
+for num in range(len(NEIGHBOUR_SUM_RADIUS)):
+    name = neighbour_sum_radius_name(num)
     NODE_APPENDED_FEATURES[name] = name
-    name_ap = neighbor_sum_above_plane_radius_name(num)
+    name_ap = neighbour_sum_above_plane_radius_name(num)
     NODE_APPENDED_FEATURES[name_ap] = name_ap
+
+    for elem in NEIGHBOUR_SUM_RADIUS_ATOMS:
+        name = neighbour_sum_radius_name(num, elem)
+        NODE_APPENDED_FEATURES[name] = name
+        name_ap = neighbour_sum_above_plane_radius_name(num, elem)
+        NODE_APPENDED_FEATURES[name_ap] = name_ap
 
 NODE_GROUP_FEATURES = groups.group_list
 DSSP_FEATURES_NAME = 'dssp_features'

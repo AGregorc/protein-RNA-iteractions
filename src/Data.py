@@ -37,8 +37,8 @@ def create_graph_process(args):
         # print(f'[{os.getpid()}] got something to work :O')
         graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
         print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
-    except:
-        print(f'[{os.getpid()}] Error from file {my_filename} {(time.time() - start_time):.1f}s')
+    except Exception as e:
+        print(f'[{os.getpid()}] Error from file {my_filename} {(time.time() - start_time):.1f}s; {e}')
         return my_filename, None
     return my_filename, graph
 
@@ -91,15 +91,18 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     variances = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
     count_errors = 0
     for i in range(num_for_standardization):
-        num = i + count_errors
-        if result[num][1] is None:
+        num = i - count_errors
+        if result[i][1] is None:
             count_errors += 1
             continue
-        numerical_features = result[num][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
+        numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
         m = torch.mean(numerical_features, dim=0)
         v = torch.var(numerical_features, dim=0)
-        means[i] = m
-        variances[i] = v
+        means[num] = m
+        variances[num] = v
+    if count_errors > 0:
+        means = means[:-count_errors]
+        variances = variances[:-count_errors]
     mean = torch.mean(means, dim=0, dtype=torch.float32)
     std = torch.sqrt(torch.mean(variances, dim=0, dtype=torch.float32))
 
