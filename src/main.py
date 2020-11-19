@@ -5,6 +5,7 @@ import torch.nn as nn
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR
 from Data.Data import get_dataset
 from Data.Evaluate import calculate_metrics
+from GNN.MyModels import MyModels
 from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
@@ -24,10 +25,8 @@ def main():
     del dataset, dataset_filenames
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    net = NetSequenceWrapper(
-        InitialDataLayer(word_to_ixs=word_to_ixs),
-        NetFirstGraphConvThenLinear(hidden_conv_sizes=[32], hidden_linear_sizes=[128, 128, 64, 64, 32, 16], dropout_p=0.5)
-    )
+    models = MyModels(word_to_ixs)
+    net = models.my_models['first_one_GraphConv_then_linear']
     # to_load = {'model': net}
     # checkpoint_fp = "../data/models/best/best_model_364_loss=-0.3888.pt"
     # checkpoint = torch.load(checkpoint_fp)

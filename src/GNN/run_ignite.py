@@ -1,5 +1,6 @@
 from collections import namedtuple
 from datetime import datetime
+from os.path import join
 from typing import Union, Any, Tuple, Optional, Dict, Callable
 
 import dgl
@@ -95,7 +96,9 @@ def batcher(device):
     return batcher_dev
 
 
-def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None, epochs=10, batch_size=1, log_interval=10, log_dir='/'):
+def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None,
+        epochs=10, batch_size=1, log_interval=10,
+        model_name='unknown', log_dir='/'):
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
     writer = SummaryWriter(log_dir=log_dir+current_time)
     if device is None:
@@ -144,8 +147,8 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     to_save = {'model': model}
-    handler = Checkpoint(to_save, DiskSaver(MODELS_PATH, create_dir=True, require_empty=False), n_saved=2,
-                         filename_prefix='best', score_function=score_function, score_name="loss",
+    handler = Checkpoint(to_save, DiskSaver(join(MODELS_PATH, model_name), create_dir=True, require_empty=False),
+                         n_saved=2, filename_prefix='best', score_function=score_function, score_name="loss",
                          global_step_transform=global_step_from_engine(trainer))
 
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
