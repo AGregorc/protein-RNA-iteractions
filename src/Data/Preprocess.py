@@ -8,7 +8,7 @@ import torch
 from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector, make_dssp_dict
 
 import Constants
-from groups import a2gs
+from Data.groups import a2gs
 
 
 def create_graph_sample(model_structure, word_to_ixs, lock):

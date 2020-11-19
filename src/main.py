@@ -1,17 +1,16 @@
 import torch
-from ignite.handlers import Checkpoint
 from sklearn.model_selection import train_test_split
 import torch.nn as nn
 
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR
-from Data import save_dataset, get_dataset
-from Evaluate import calculate_metrics
+from Data.Data import get_dataset
+from Data.Evaluate import calculate_metrics
 from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
-from PlotMPL import plot_from_file, plot_predicted, use_new_window
-from Preprocess import is_labeled_positive
+from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window
+from Data.Preprocess import is_labeled_positive
 
 
 def main():

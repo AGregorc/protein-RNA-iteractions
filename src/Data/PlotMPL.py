@@ -3,8 +3,8 @@ from Bio.PDB import Atom
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR
-from Data import my_pdb_parser
-from Preprocess import get_dgl_id
+from Data.Data import my_pdb_parser
+from Data.Preprocess import get_dgl_id
 
 
 def use_new_window():

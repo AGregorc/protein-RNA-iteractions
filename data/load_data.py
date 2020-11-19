@@ -116,4 +116,4 @@ def load_data(start_pdb=0, limit=None):
 
 
 if __name__ == '__main__':
-    load_data(limit=500)
+    load_data(limit=5)

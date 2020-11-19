@@ -1,5 +1,5 @@
 import os
-import groups
+from Data.Data import groups
 
 DATA_PATH = '../data/'
 SAVED_GRAPHS_PATH = DATA_PATH + 'preprocessed_data/'

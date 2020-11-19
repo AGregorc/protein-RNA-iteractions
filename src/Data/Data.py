@@ -3,15 +3,13 @@ import os
 import time
 import warnings
 from multiprocessing import Pool, Manager
-from queue import Queue
 
-import numpy as np
 import torch
 from Bio.PDB import PDBParser
 from dgl.data import save_graphs, load_graphs
 
 import Constants
-from Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
+from Data.Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
 
 def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None):
