@@ -20,12 +20,13 @@ def predict(net, dataset):
     return result
 
 
-def calculate_metrics(dataset: list, model, print_model_name: str):
+def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True):
     """
         Final metrics to compare different models
     :param dataset: list of graphs
     :param model: model
     :param print_model_name: to print model name
+    :param do_plot: if true it plots roc and other visualizations
     :return: accuracy, precision, recall, f1 scores
     """
     model.eval()
@@ -63,7 +64,10 @@ def calculate_metrics(dataset: list, model, print_model_name: str):
             print(area_under_curve)
             print('Optimal threshold: ')
             print(optimal_threshold)
-            plot_roc(fpr, tpr, area_under_curve, optimal_idx)
+            if do_plot:
+                plot_roc(fpr, tpr, area_under_curve, optimal_idx)
+                plot_positive_hist(y_true, y_pred)
+                plot_negative_hist(y_true, y_pred)
         y_pred = y_interaction_score > optimal_threshold
         print('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
@@ -102,4 +106,16 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic example')
     plt.legend(loc="lower right")
+    plt.show()
+
+
+def plot_positive_hist(y_true, y_pred):
+    plt.hist(y_pred[np.where(y_true == 1)[0]], bins=100)
+    plt.title('positive histogram')
+    plt.show()
+
+
+def plot_negative_hist(y_true, y_pred):
+    plt.hist(y_pred[np.where(y_true == 0)[0]], bins=100)
+    plt.title('negative histogram')
     plt.show()

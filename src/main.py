@@ -10,7 +10,7 @@ from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
-from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window
+from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window, plot_training_history
 from Data.Preprocess import is_labeled_positive
 
 
@@ -33,7 +33,10 @@ def main():
     # Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
     #
     criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 8.5], device=device))
-    run(net, train_d, test_d, criterion=criterion, batch_size=5, epochs=1000, log_dir='/tmp/tensorboard_logs/')
+    training_h, validation_h, whole_training_h = run(net, train_d, test_d, criterion=criterion,
+                                                     batch_size=5, epochs=1000,
+                                                     log_dir='/tmp/tensorboard_logs/')
+    plot_training_history(training_h, validation_h)
     #
     calculate_metrics(test_d, net, 'main_run')
 
