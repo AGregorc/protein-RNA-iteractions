@@ -71,3 +71,22 @@ def plot_predicted(filename, model, word_to_ixs, standardize=None):
         return LABEL_NEGATIVE_COLOR
 
     plot_graph(pairs=pairs, atoms=atoms, atom_color_func=get_predicted_color, title=filename)
+
+
+def _training_history(array_1, label_1, array_2, label_2, xlabel, ylabel):
+    plt.plot(array_1, label=label_1)
+    plt.plot(array_2, label=label_2)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(frameon=False)
+    plt.show()
+
+
+def plot_training_history(training_history, validation_history):
+    _training_history(training_history['accuracy'], 'Training Accuracy',
+                      validation_history['accuracy'], 'Validation Accuracy',
+                      'No. of Epochs', 'Accuracy')
+
+    _training_history(training_history['loss'], 'Training Loss',
+                      validation_history['loss'], 'Validation Loss',
+                      'No. of Epochs', 'Loss')

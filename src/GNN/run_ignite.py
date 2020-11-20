@@ -98,9 +98,13 @@ def batcher(device):
 
 def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None,
         epochs=10, batch_size=1, log_interval=10,
-        model_name='unknown', log_dir='/'):
-    current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-    writer = SummaryWriter(log_dir=log_dir+current_time)
+        model_name='unknown', log_dir=None):
+
+    writer = None
+    if log_dir is not None and log_dir != '':
+        current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+        writer = SummaryWriter(log_dir=log_dir+current_time)
+
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         print(f'Model device: {device}')
@@ -139,6 +143,9 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
 
     trainer = Engine(update_model)
 
+    training_history = {'accuracy': [], 'loss': []}
+    whole_training_history = {'loss': []}
+    validation_history = {'accuracy': [], 'loss': []}
     val_metrics = {"accuracy": Accuracy(), "loss": Loss(criterion)}
     train_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
     val_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
@@ -155,7 +162,9 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
 
     @trainer.on(Events.ITERATION_COMPLETED(every=log_interval))
     def log_training_loss(engine):
-        writer.add_scalar("training/loss", engine.state.output, engine.state.iteration)
+        whole_training_history['loss'].append(engine.state.output)
+        if writer is not None:
+            writer.add_scalar("training/loss", engine.state.output, engine.state.iteration)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
@@ -167,8 +176,11 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
               f'Epoch {engine.state.epoch:05d} | '
               f'Avg loss {avg_loss:.4f} | '
               f'Avg accuracy {avg_accuracy:.4f} |')
-        writer.add_scalar("training/avg_loss", avg_loss, engine.state.epoch)
-        writer.add_scalar("training/avg_accuracy", avg_accuracy, engine.state.epoch)
+        training_history['accuracy'].append(avg_accuracy)
+        training_history['loss'].append(avg_loss)
+        if writer is not None:
+            writer.add_scalar("training/avg_loss", avg_loss, engine.state.epoch)
+            writer.add_scalar("training/avg_accuracy", avg_accuracy, engine.state.epoch)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
@@ -180,10 +192,15 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
               f'Epoch {engine.state.epoch:05d} | '
               f'Avg loss {avg_loss:.4f} | '
               f'Avg accuracy {avg_accuracy:.4f} |')
-        writer.add_scalar("valdation/avg_loss", avg_loss, engine.state.epoch)
-        writer.add_scalar("valdation/avg_accuracy", avg_accuracy, engine.state.epoch)
+        validation_history['accuracy'].append(avg_accuracy)
+        validation_history['loss'].append(avg_loss)
+        if writer is not None:
+            writer.add_scalar("valdation/avg_loss", avg_loss, engine.state.epoch)
+            writer.add_scalar("valdation/avg_accuracy", avg_accuracy, engine.state.epoch)
 
     # kick everything off
     trainer.run(train_loader, max_epochs=epochs)
 
-    writer.close()
+    if writer is not None:
+        writer.close()
+    return training_history, validation_history, whole_training_history

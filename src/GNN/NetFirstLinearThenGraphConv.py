@@ -1,7 +1,5 @@
 import typing
 
-import torch.nn.functional as F
-from dgl.nn.pytorch import GraphConv
 from torch import nn
 from torch.nn import Linear
 
