@@ -35,12 +35,12 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True)
         y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
     y_true = y_true.cpu()
     output = predict(model, dataset)
-    y_interaction_score = output[:, 1]
+    y_interaction_percent = torch.sigmoid(output[:, 1])
     y_pred = output.argmax(dim=1)
 
     y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
 
-    fpr, tpr, thresholds = roc_curve(y_true, y_interaction_score, pos_label=1)
+    fpr, tpr, thresholds = roc_curve(y_true, y_interaction_percent, pos_label=1)
     area_under_curve = auc(fpr, tpr)
 
     confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
@@ -68,7 +68,7 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True)
                 plot_roc(fpr, tpr, area_under_curve, optimal_idx)
                 plot_positive_hist(y_true, y_pred)
                 plot_negative_hist(y_true, y_pred)
-        y_pred = y_interaction_score > optimal_threshold
+        y_pred = y_interaction_percent > optimal_threshold
         print('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
 
