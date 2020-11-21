@@ -6,7 +6,7 @@ from Constants import NODE_FEATURES_NAME
 
 class NodeEmbeddingLayer(nn.Module):
 
-    def __init__(self, in_feats, out_feats, embedding_dim=5, word_to_ixs=None):
+    def __init__(self, in_feats, out_feats, embedding_dim=2, word_to_ixs=None):
         super(NodeEmbeddingLayer, self).__init__()
         # if vocab_sizes is None:
         #     vocab_sizes = get_feat_wti_lens()

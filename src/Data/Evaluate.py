@@ -47,6 +47,10 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True)
     optimal_idx = np.argmax(tpr - fpr)
     optimal_threshold = thresholds[optimal_idx]
 
+    if do_plot:
+        plot_positive_hist(y_true, y_interaction_percent)
+        plot_negative_hist(y_true, y_interaction_percent)
+
     for i in range(2):
         if print_model_name is not None:
             print('Measures for {}:'.format(print_model_name))
@@ -66,8 +70,6 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True)
             print(optimal_threshold)
             if do_plot:
                 plot_roc(fpr, tpr, area_under_curve, optimal_idx)
-                plot_positive_hist(y_true, y_pred)
-                plot_negative_hist(y_true, y_pred)
         y_pred = y_interaction_percent > optimal_threshold
         print('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
@@ -109,13 +111,16 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx):
     plt.show()
 
 
-def plot_positive_hist(y_true, y_pred):
-    plt.hist(y_pred[np.where(y_true == 1)[0]], bins=100)
-    plt.title('positive histogram')
+def _pos_neg_hist(y_true, y_pred_percent, val, title):
+    plt.hist(y_pred_percent[np.where(y_true == val)[0]], bins=100)
+    plt.title(title)
+    # plt.xlim([0.0, 1.0])
     plt.show()
 
 
-def plot_negative_hist(y_true, y_pred):
-    plt.hist(y_pred[np.where(y_true == 0)[0]], bins=100)
-    plt.title('negative histogram')
-    plt.show()
+def plot_positive_hist(y_true, y_pred_percent):
+    _pos_neg_hist(y_true, y_pred_percent, 1, 'positive histogram')
+
+
+def plot_negative_hist(y_true, y_pred_percent):
+    _pos_neg_hist(y_true, y_pred_percent, 0, 'negative histogram')

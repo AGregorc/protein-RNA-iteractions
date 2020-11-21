@@ -65,7 +65,7 @@ def neighbour_sum_above_plane_radius_name(idx, atom=None):
         return 'neighbour_sum_radius_' + str(atom) + 'above_plane' + str(NEIGHBOUR_SUM_RADIUS[idx])
 
 
-NEIGHBOUR_SUM_RADIUS = [1.5, 2, 4, 6, 8, 10]
+NEIGHBOUR_SUM_RADIUS = [2, 6, 10]
 NEIGHBOUR_SUM_RADIUS_ATOMS = ['C', 'H', 'N', 'O']
 for num in range(len(NEIGHBOUR_SUM_RADIUS)):
     name = neighbour_sum_radius_name(num)

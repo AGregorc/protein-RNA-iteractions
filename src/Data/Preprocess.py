@@ -1,4 +1,5 @@
 import json
+import os
 import time
 from collections import deque
 
@@ -17,7 +18,7 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     # end = time.time()
     # print(f'label_protein_rna_interactions: {end - start}')
     # start = end
-    surface = get_surface(protein_chains)
+    surface = get_surface(protein_chains, MSMS=os.path.join('.', 'Data', 'msms'))
     # end = time.time()
     # print(f'get_surface: {end - start}')
     # start = end
@@ -425,7 +426,7 @@ def get_atom_features_and_labels(protein_atoms):
         labels[idx] = label
 
     #     print(sum(labels), len(labels), sum(labels) / len(labels))
-    return features, torch.from_numpy(labels).to(dtype=torch.int64), torch.from_numpy(positions)
+    return features, torch.from_numpy(labels).to(dtype=torch.long), torch.from_numpy(positions)
 
 
 def get_dgl_id(atom):

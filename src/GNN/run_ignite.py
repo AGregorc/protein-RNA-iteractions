@@ -1,3 +1,4 @@
+import time
 from collections import namedtuple
 from datetime import datetime
 from os.path import join
@@ -99,6 +100,7 @@ def batcher(device):
 def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None,
         epochs=10, batch_size=1, log_interval=10,
         model_name='unknown', log_dir=None):
+    start_time = time.time()
 
     writer = None
     if log_dir is not None and log_dir != '':
@@ -134,9 +136,9 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         outputs = model(g)
         loss = criterion(outputs, batch.labels)
 
-        if torch.isnan(loss).any():
-            print(f'Loss is NAN at step: {engine.state.iteration}')
-            return 0
+        # if torch.isnan(loss).any():
+        #     print(f'Loss is NAN at step: {engine.state.iteration}')
+        #     return 0
         loss.backward()
         optimizer.step()
         return loss.item()
@@ -188,10 +190,10 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         metrics = val_evaluator.state.metrics
         avg_accuracy = metrics["accuracy"]
         avg_loss = metrics["loss"]
-        print(f'Val results   | '
-              f'Epoch {engine.state.epoch:05d} | '
-              f'Avg loss {avg_loss:.4f} | '
-              f'Avg accuracy {avg_accuracy:.4f} |')
+        # print(f'Val results   | '
+        #       f'Epoch {engine.state.epoch:05d} | '
+        #       f'Avg loss {avg_loss:.4f} | '
+        #       f'Avg accuracy {avg_accuracy:.4f} |')
         validation_history['accuracy'].append(avg_accuracy)
         validation_history['loss'].append(avg_loss)
         if writer is not None:
@@ -203,4 +205,6 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
 
     if writer is not None:
         writer.close()
+
+    print(f'Model trained in {(time.time() - start_time):.1f}s')
     return training_history, validation_history, whole_training_history

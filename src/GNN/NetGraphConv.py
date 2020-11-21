@@ -9,7 +9,7 @@ from torch.nn import Linear
 class NetGraphConv(nn.Module):
     def __init__(self, in_features=64 + 8, out_features=2,
                  hidden_conv_sizes=None,
-                 dropout_p=0.4):
+                 dropout_p=0.2):
         super(NetGraphConv, self).__init__()
 
         if hidden_conv_sizes is None:
