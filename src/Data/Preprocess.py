@@ -231,7 +231,8 @@ def num_of_atoms_above_plane(n, x, atoms):
 
 def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=Constants.GET_ONLY_CA_ATOMS):
     pdb_id = protein_chains[0].get_parent().full_id[0]
-    dssp = make_dssp_dict(Constants.DSSP_PATH + pdb_id + '.dssp')
+    pdb_id = pdb_id[-4:]
+    dssp = make_dssp_dict(os.path.join(Constants.DSSP_PATH,  pdb_id + '.dssp'))
     get_residues_t = dssp_key_t = min_dist_t = residue_depth_t = atom_d_t = settattr_t = 0
 
     for chain in protein_chains:

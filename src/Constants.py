@@ -1,13 +1,14 @@
 import os
 from Data import groups
 
-DATA_PATH = '../data/'
-SAVED_GRAPHS_PATH = os.path.join(DATA_PATH, 'preprocessed_data/')
+ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
+DATA_PATH = os.path.join(ROOT_PATH, '..', 'data')
+SAVED_GRAPHS_PATH = os.path.join(DATA_PATH, 'preprocessed_data')
 SAVED_GRAPHS_PATH_DEFAULT_FILE = os.path.join(SAVED_GRAPHS_PATH, 'graph_data')
 GRAPH_EXTENSION = '.bin'
-PDB_PATH = os.path.join(DATA_PATH, 'pdbs/')
-DSSP_PATH = os.path.join(DATA_PATH, 'dssp/')
-MODELS_PATH = os.path.join(DATA_PATH, 'models/')
+PDB_PATH = os.path.join(DATA_PATH, 'pdbs')
+DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
+MODELS_PATH = os.path.join(DATA_PATH, 'models')
 NUM_PROCESSES = 12
 
 if not os.path.exists(DATA_PATH):
