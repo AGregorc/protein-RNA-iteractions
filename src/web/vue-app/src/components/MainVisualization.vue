@@ -11,7 +11,18 @@
 
       </label>
       <button @click="load"> Load </button>
-      <button v-if="is_model_visible" @click="changeStyle"> Change style </button>
+
+      <div v-if="is_model_visible" id="style-panel" >
+<!--        <button  @click="changeProteinStyle"> Change style </button>-->
+        <select v-model="protein_style_selected">
+          <option v-for="style in protein_styles" v-bind:key="style">
+            {{ style }}
+          </option>
+        </select>
+
+        <input id="hide-rna" type="checkbox" v-model="rna_hide">
+        <label for="hide-rna">Hide RNA</label>
+      </div>
     </div>
   </teleport>
 </template>
@@ -25,16 +36,30 @@ export default {
   name: "MainVisualization",
   data: function () {
     return {
+      is_model_visible: false,
+      pdb_text: '',
       predictions: undefined,
       protein_chains: [],
-      pdb_text: '',
-      is_model_visible: false,
+      protein_styles: [
+        'stick',
+        'sphere',
+        'cartoon',
+      ],
+      protein_style_selected: 'sphere',
+      rna_hide: false,
+    }
+  },
+  watch: {
+    protein_style_selected: function() {
+      this.changeProteinStyle();
+    },
+    rna_hide: function() {
+      viewer.setStyle({}, {cartoon: {hidden: this.rna_hide, colorscheme: 'Jmol'}});  /* default style */
+      this.changeProteinStyle();
     }
   },
   mounted() {
-
     let element = document.getElementById('container-01');
-
     let config = { backgroundColor: 'gray' };
     viewer = window.$3Dmol.createViewer( element, config );
   },
@@ -54,19 +79,19 @@ export default {
           v.removeAllModels();
           v.addModel( file, "pdb" );                       /* load data */
           v.setStyle({}, {cartoon: {colorscheme: 'Jmol'}});  /* default style */
-          this.protein_chains.forEach(c => {
-            v.setStyle({chain: c}, {sphere: {colorfunc: this.isInInteraction}});  /* style all atoms */
-          })
+          this.changeProteinStyle();
           v.zoomTo();                                      /* set camera */
           v.render();                                      /* render scene */
           v.zoom(1.2, 1000);
           this.is_model_visible = true;
         });
     },
-    changeStyle() {
+    changeProteinStyle() {
       console.log('change style')
       this.protein_chains.forEach(c => {
-        viewer.setStyle({chain: c}, {stick: {colorfunc: this.isInInteraction}});  /* style all atoms */
+        let style = {}
+        style[this.protein_style_selected] = {colorfunc: this.isInInteraction};
+        viewer.setStyle({chain: c}, style);  /* style all atoms */
       })
       viewer.render();
     },
@@ -88,5 +113,11 @@ export default {
 
 .padding {
   padding: 1em;
+}
+
+#style-panel {
+  margin-top: 1em;
+  border-top: 5px solid #444444;
+  padding-top: 1em;
 }
 </style>
