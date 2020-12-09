@@ -19,9 +19,17 @@
             {{ style }}
           </option>
         </select>
+        <br>
 
         <input id="hide-rna" type="checkbox" v-model="rna_hide">
         <label for="hide-rna">Hide RNA</label>
+        <br>
+        <button @click="recenter">Recenter</button>
+        <br>
+
+        <input id="res-labels" type="checkbox" v-model="toggle_res_labels">
+        <label for="res-labels">Show residue labels</label>
+        <br>
       </div>
     </div>
   </teleport>
@@ -43,10 +51,13 @@ export default {
       protein_styles: [
         'stick',
         'sphere',
+        'line',
+        'cross',
         'cartoon',
       ],
       protein_style_selected: 'sphere',
       rna_hide: false,
+      toggle_res_labels: false,
     }
   },
   watch: {
@@ -56,7 +67,10 @@ export default {
     rna_hide: function() {
       viewer.setStyle({}, {cartoon: {hidden: this.rna_hide, colorscheme: 'Jmol'}});  /* default style */
       this.changeProteinStyle();
-    }
+    },
+    toggle_res_labels: function () {
+      this.resLabels();
+    },
   },
   mounted() {
     let element = document.getElementById('container-01');
@@ -99,6 +113,18 @@ export default {
       // console.log(atom);
       return this.predictions[atom.serial] === 1 ? 'red' : 'white';
     },
+    resLabels() {
+      if (this.toggle_res_labels) {
+        this.protein_chains.forEach(c => {
+          viewer.addResLabels({ chain : c });
+        })
+      } else {
+        viewer.removeAllLabels();
+      }
+    },
+    recenter() {
+      viewer.zoomTo();
+    },
   }
 }
 </script>
@@ -116,6 +142,7 @@ export default {
 }
 
 #style-panel {
+  display: block;
   margin-top: 1em;
   border-top: 5px solid #444444;
   padding-top: 1em;
