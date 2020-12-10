@@ -1,9 +1,12 @@
+import os
+
 import torch
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, mean_squared_error, roc_curve, \
     auc
 import matplotlib.pyplot as plt
 import numpy as np
 
+import Constants
 from Constants import LABEL_NODE_NAME
 
 
@@ -20,7 +23,7 @@ def predict(net, dataset):
     return result
 
 
-def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True):
+def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True, save=False):
     """
         Final metrics to compare different models
     :param dataset: list of graphs
@@ -48,31 +51,40 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True)
     optimal_threshold = thresholds[optimal_idx]
 
     if do_plot:
-        plot_positive_hist(y_true, y_interaction_percent)
-        plot_negative_hist(y_true, y_interaction_percent)
+        plot_positive_hist(y_true, y_interaction_percent, save=save, model_name=print_model_name)
+        plot_negative_hist(y_true, y_interaction_percent, save=save, model_name=print_model_name)
 
+    string_out = []
     for i in range(2):
         if print_model_name is not None:
-            print('Measures for {}:'.format(print_model_name))
-            print('Confusion matrix:')
-            print(confusion_mtx)
-            print('F1 score:')
-            print(f1)
-            print('Precision:')
-            print(precision)
-            print('Recall:')
-            print(recall)
-            print('RMSE:')
-            print(rmse)
-            print('AUC:')
-            print(area_under_curve)
-            print('Optimal threshold: ')
-            print(optimal_threshold)
-            if do_plot:
-                plot_roc(fpr, tpr, area_under_curve, optimal_idx)
+            string_out.append('Measures for {}:'.format(print_model_name))
+            string_out.append('Confusion matrix:')
+            string_out.append(str(confusion_mtx))
+            string_out.append('F1 score:')
+            string_out.append(str(f1))
+            string_out.append('Precision:')
+            string_out.append(str(precision))
+            string_out.append('Recall:')
+            string_out.append(str(recall))
+            string_out.append('RMSE:')
+            string_out.append(str(rmse))
         y_pred = y_interaction_percent > optimal_threshold
-        print('And now when predicted is from optimal threshold of only one node')
+        string_out.append('And now when predicted is from optimal threshold of only one node')
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
+
+    if print_model_name is not None:
+        string_out.append('AUC:')
+        string_out.append(str(area_under_curve))
+        string_out.append('Optimal threshold: ')
+        string_out.append(str(optimal_threshold))
+        if do_plot:
+            plot_roc(fpr, tpr, area_under_curve, optimal_idx)
+
+        str_result = '\n'.join(string_out)
+        if save:
+            with open(os.path.join(Constants.MODELS_PATH, print_model_name, 'measures.txt'), 'w') as f:
+                f.write(str_result)
+        print(str_result)
 
     result = {
         'confusion_matrix': confusion_mtx,
@@ -95,7 +107,7 @@ def _get(y_true, y_pred):
     return confusion_mtx, f1, precision, recall, rmse
 
 
-def plot_roc(fpr, tpr, roc_auc, threshold_idx):
+def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name=''):
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange',
@@ -108,19 +120,26 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver operating characteristic example')
     plt.legend(loc="lower right")
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name,  'ROC.png'))
+    else:
+        plt.show()
 
 
-def _pos_neg_hist(y_true, y_pred_percent, val, title):
+def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name=''):
+    plt.figure()
     plt.hist(y_pred_percent[np.where(y_true == val)[0]], bins=100)
     plt.title(title)
     # plt.xlim([0.0, 1.0])
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name,  title + '.png'))
+    else:
+        plt.show()
 
 
-def plot_positive_hist(y_true, y_pred_percent):
-    _pos_neg_hist(y_true, y_pred_percent, 1, 'positive histogram')
+def plot_positive_hist(y_true, y_pred_percent, save=False, model_name=''):
+    _pos_neg_hist(y_true, y_pred_percent, 1, 'Positive histogram', save, model_name)
 
 
-def plot_negative_hist(y_true, y_pred_percent):
-    _pos_neg_hist(y_true, y_pred_percent, 0, 'negative histogram')
+def plot_negative_hist(y_true, y_pred_percent, save=False, model_name=''):
+    _pos_neg_hist(y_true, y_pred_percent, 0, 'Negative histogram', save, model_name)

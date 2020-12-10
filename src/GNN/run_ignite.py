@@ -152,12 +152,12 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     train_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
     val_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
 
-    handler = EarlyStopping(patience=10, score_function=score_function, trainer=trainer)
+    handler = EarlyStopping(patience=20, score_function=score_function, trainer=trainer)
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     to_save = {'model': model}
     handler = Checkpoint(to_save, DiskSaver(join(MODELS_PATH, model_name), create_dir=True, require_empty=False),
-                         n_saved=2, filename_prefix='best', score_function=score_function, score_name="loss",
+                         n_saved=2, score_function=score_function, score_name="loss",
                          global_step_transform=global_step_from_engine(trainer))
 
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
