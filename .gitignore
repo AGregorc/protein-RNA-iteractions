@@ -5,6 +5,8 @@
 
 data/preprocessed_data/*
 data/images/*
+data/plots/*
+data/models/*
 
 # all pdb and dssp files:
 *.pdb
