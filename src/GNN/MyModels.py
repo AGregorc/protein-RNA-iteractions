@@ -1,6 +1,12 @@
+import copy
+from os import listdir
+from os.path import isfile, join, splitext
+
 import torch
+from ignite.handlers import Checkpoint
 from torch import nn
 
+import Constants
 from GNN.ConcatNets import ConcatNets
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
@@ -69,4 +75,23 @@ class MyModels:
                     NetLinear(in_features=128 + 32, out_features=2, hidden_linear_sizes=[128, 64, 32, 16])
                 )
         }
+
+    def load_models(self, model_name):
+        model = copy.deepcopy(self.my_models[model_name])
+        to_load = {'model': model}
+        # checkpoint_fp = "../data/models/best/best_model_364_loss=-0.3888.pt"
+        path = join(Constants.MODELS_PATH, model_name)
+        model_files = [f for f in listdir(path) if isfile(join(path, f)) and splitext(f)[1] == '.pt']
+        best_file = None
+        best_loss = 1000
+        for name in model_files:
+            loss = abs(float(name.split('=')[1][:-3]))
+            if loss <= best_loss:
+                best_loss = loss
+                best_file = name
+
+        checkpoint = torch.load(join(path, best_file))
+        Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
+
+        return model, best_loss
 
