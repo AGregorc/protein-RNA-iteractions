@@ -38,26 +38,48 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
         y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
     y_true = y_true.cpu()
     output = predict(model, dataset)
-    y_interaction_percent = torch.sigmoid(output[:, 1])
-    y_pred = output.argmax(dim=1)
 
+    y_pred = output.argmax(dim=1)
     y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
 
-    fpr, tpr, thresholds = roc_curve(y_true, y_interaction_percent, pos_label=1)
-    area_under_curve = auc(fpr, tpr)
+    # Calculate confidence probabilities in a different way
+    is_not_p = torch.sigmoid(output[:, 0])
+    is_in_p = torch.sigmoid(output[:, 1])
 
-    confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
-    optimal_idx = np.argmax(tpr - fpr)
-    optimal_threshold = thresholds[optimal_idx]
+    y_interaction_percent = is_in_p
+    y_reverse_interaction_percent = 1 - is_not_p
 
-    if do_plot:
-        plot_positive_hist(y_true, y_interaction_percent, save=save, model_name=print_model_name)
-        plot_negative_hist(y_true, y_interaction_percent, save=save, model_name=print_model_name)
+    c = torch.stack((y_reverse_interaction_percent, y_interaction_percent), dim=1)
+    y_pick_major_percent = torch.gather(c, 1, torch.unsqueeze(y_pred, 1)).squeeze()
+    y_combine_percent = (y_interaction_percent + y_reverse_interaction_percent) / 2
+
+    y_combine_all_percent = (y_interaction_percent + y_reverse_interaction_percent + y_pick_major_percent) / 3
+
+    all_predictions = {
+        'y_pred': y_pred,
+        'y_interaction_percent': y_interaction_percent,
+        'y_reverse_interaction_percent': y_reverse_interaction_percent,
+        'y_combine_percent': y_combine_percent,
+        'y_pick_major_percent': y_pick_major_percent,
+        'y_combine_all_percent': y_combine_all_percent,
+    }
 
     string_out = []
-    for i in range(2):
+    for name, predictions in all_predictions.items():
+        fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
+        optimal_idx = np.argmax(tpr - fpr)
+        optimal_threshold = thresholds[optimal_idx]
+        area_under_curve = auc(fpr, tpr)
+
+        y_predicted = predictions > optimal_threshold
+        confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_predicted, predictions)
+
+        if do_plot:
+            plot_positive_hist(y_true, predictions, save=save, model_name=print_model_name, appendix=name)
+            plot_negative_hist(y_true, predictions, save=save, model_name=print_model_name, appendix=name)
+
         if print_model_name is not None:
-            string_out.append('Measures for {}:'.format(print_model_name))
+            string_out.append(f'Measures for {print_model_name} predicted as {name}:')
             string_out.append('Confusion matrix:')
             string_out.append(str(confusion_mtx))
             string_out.append('F1 score:')
@@ -68,18 +90,15 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
             string_out.append(str(recall))
             string_out.append('RMSE:')
             string_out.append(str(rmse))
-        y_pred = y_interaction_percent > optimal_threshold
-        string_out.append('And now when predicted is from optimal threshold of only one node')
-        confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_pred)
+            string_out.append('AUC:')
+            string_out.append(str(area_under_curve))
+            string_out.append('Optimal threshold: ')
+            string_out.append(str(optimal_threshold))
+            if do_plot:
+                plot_roc(fpr, tpr, area_under_curve, optimal_idx, save=save, appendix=name)
+        string_out.append('\n\n')
 
     if print_model_name is not None:
-        string_out.append('AUC:')
-        string_out.append(str(area_under_curve))
-        string_out.append('Optimal threshold: ')
-        string_out.append(str(optimal_threshold))
-        if do_plot:
-            plot_roc(fpr, tpr, area_under_curve, optimal_idx)
-
         str_result = '\n'.join(string_out)
         if save:
             with open(os.path.join(Constants.MODELS_PATH, print_model_name, 'measures.txt'), 'w') as f:
@@ -98,16 +117,19 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
     return result
 
 
-def _get(y_true, y_pred):
+def _get(y_true, y_pred, percentages):
+    # y_pred_bin = y_pred
+    # if threshold:
+    #     y_pred_bin = y_pred > threshold
     confusion_mtx = confusion_matrix(y_true, y_pred)
     f1 = f1_score(y_true, y_pred, average='weighted', zero_division=1)
     precision = precision_score(y_true, y_pred, average='weighted', zero_division=1)
     recall = recall_score(y_true, y_pred, average='weighted', zero_division=1)
-    rmse = mean_squared_error(y_true, y_pred) ** 0.5
+    rmse = mean_squared_error(y_true, percentages) ** 0.5
     return confusion_mtx, f1, precision, recall, rmse
 
 
-def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name=''):
+def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name='', appendix=''):
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange',
@@ -118,28 +140,28 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name=''):
     plt.ylim([0.0, 1.0])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
+    plt.title('ROC for ' + model_name + ' ' + appendix)
     plt.legend(loc="lower right")
     if save:
-        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name,  'ROC.png'))
+        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + '_ROC.png'))
     else:
         plt.show()
 
 
-def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name=''):
+def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='', appendix=''):
     plt.figure()
     plt.hist(y_pred_percent[np.where(y_true == val)[0]], bins=100)
-    plt.title(title)
+    plt.title(title + " " + appendix)
     # plt.xlim([0.0, 1.0])
     if save:
-        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name,  title + '.png'))
+        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + ' ' + title + '.png'))
     else:
         plt.show()
 
 
-def plot_positive_hist(y_true, y_pred_percent, save=False, model_name=''):
-    _pos_neg_hist(y_true, y_pred_percent, 1, 'Positive histogram', save, model_name)
+def plot_positive_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
+    _pos_neg_hist(y_true, y_pred_percent, 1, 'Positive histogram', save, model_name, appendix)
 
 
-def plot_negative_hist(y_true, y_pred_percent, save=False, model_name=''):
-    _pos_neg_hist(y_true, y_pred_percent, 0, 'Negative histogram', save, model_name)
+def plot_negative_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
+    _pos_neg_hist(y_true, y_pred_percent, 0, 'Negative histogram', save, model_name, appendix)
