@@ -14,6 +14,8 @@ from GNN.NetSequenceWrapper import NetSequenceWrapper
 from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window, plot_training_history
 from Data.Preprocess import is_labeled_positive
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 def main():
     limit = 5

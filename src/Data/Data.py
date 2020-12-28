@@ -11,6 +11,8 @@ from dgl.data import save_graphs, load_graphs
 import Constants
 from Data.Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None):
     if word_to_ixs is None:

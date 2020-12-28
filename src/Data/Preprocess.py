@@ -11,6 +11,8 @@ from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, V
 import Constants
 from Data.groups import a2gs
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 def create_graph_sample(model_structure, word_to_ixs, lock):
     # start = time.time()

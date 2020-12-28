@@ -12,21 +12,23 @@ from torch.utils.data import DataLoader
 
 from Constants import LABEL_NODE_NAME, MODELS_PATH
 
-try:
-    from tensorboardX import SummaryWriter
-except ImportError:
-    try:
-        from torch.utils.tensorboard import SummaryWriter
-    except ImportError:
-        raise RuntimeError(
-            "This module requires either tensorboardX or torch >= 1.2.0. "
-            "You may install tensorboardX with command: \n pip install tensorboardX \n"
-            "or upgrade PyTorch using your package manager of choice (pip or conda)."
-        )
+# try:
+#     from tensorboardX import SummaryWriter
+# except ImportError:
+#     try:
+#         from torch.utils.tensorboard import SummaryWriter
+#     except ImportError:
+#         raise RuntimeError(
+#             "This module requires either tensorboardX or torch >= 1.2.0. "
+#             "You may install tensorboardX with command: \n pip install tensorboardX \n"
+#             "or upgrade PyTorch using your package manager of choice (pip or conda)."
+#         )
 
 
 from ignite.engine import Events, Engine
 from ignite.metrics import Accuracy, Loss, Metric
+
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 GCNBatch = namedtuple('GCNBatch', ['graph', 'labels'])
 
