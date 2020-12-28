@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR, NODE_FEATURES_NUM
 from Data.Data import get_dataset, save_dataset
-from Data.Evaluate import calculate_metrics
+from Data.Evaluate import calculate_metrics, majority_model_metrics
 from GNN.MyModels import MyModels
 from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer
@@ -16,7 +16,7 @@ from Data.Preprocess import is_labeled_positive
 
 
 def main():
-    limit = 500
+    limit = 5
     dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
     # load_filename=Constants.SAVED_GRAPHS_PATH + 'graph_data_2.bin')
 
@@ -28,19 +28,20 @@ def main():
     print(NODE_FEATURES_NUM)
 
     models = MyModels(word_to_ixs)
-    for model_name, net in models.my_models.items():
-        # model_name = 'just_linear'
-        # net = models.my_models[model_name]
-        print(net)
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 1.6], device=device))
-        # criterion = nn.CrossEntropyLoss()
-        training_h, validation_h, whole_training_h = run(net, train_d, test_d, criterion=criterion,
-                                                         batch_size=10, epochs=1000,
-                                                         model_name=model_name)
-                                                         # log_dir='/tmp/tensorboard_logs/')
+    # for model_name, net in models.my_models.items():
+    model_name = 'just_linear'
+    net = models.my_models[model_name]
+    print(net)
+    criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 1.6], device=device))
+    # criterion = nn.CrossEntropyLoss()
+    training_h, validation_h, whole_training_h = run(net, train_d, test_d, criterion=criterion,
+                                                     batch_size=10, epochs=1000,
+                                                     model_name=model_name)
+                                                     # log_dir='/tmp/tensorboard_logs/')
 
-        plot_training_history(training_h, validation_h, model_name=model_name, save=True)
-        calculate_metrics(test_d, net, print_model_name=model_name, save=True)
+    plot_training_history(training_h, validation_h, model_name=model_name, save=True)
+    calculate_metrics(test_d, net, print_model_name=model_name, save=True)
+    majority_model_metrics(test_d, save=True)
 
     # use_new_window()
     # #

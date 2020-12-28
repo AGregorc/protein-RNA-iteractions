@@ -23,6 +23,19 @@ def predict(net, dataset):
     return result
 
 
+def majority_model_metrics(dataset: list, do_plot=True, save=False):
+    y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
+    for graph in dataset[1:]:
+        y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
+    y_true = y_true.cpu()
+    y_pred = torch.zeros_like(y_true)
+
+    all_predictions = {
+        'y_pred': y_pred,
+    }
+    print_metrics(y_true, all_predictions, 'majority_classifier', do_plot, save)
+
+
 def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True, save=False):
     """
         Final metrics to compare different models
@@ -63,7 +76,10 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
         'y_pick_major_percent': y_pick_major_percent,
         'y_combine_all_percent': y_combine_all_percent,
     }
+    return print_metrics(y_true, all_predictions, print_model_name, do_plot, save)
 
+
+def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, save=False):
     string_out = []
     for name, predictions in all_predictions.items():
         fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
@@ -95,7 +111,7 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
             string_out.append('Optimal threshold: ')
             string_out.append(str(optimal_threshold))
             if do_plot:
-                plot_roc(fpr, tpr, area_under_curve, optimal_idx, save=save, appendix=name)
+                plot_roc(fpr, tpr, area_under_curve, optimal_idx, model_name=print_model_name, save=save, appendix=name)
         string_out.append('\n\n')
 
     if print_model_name is not None:
@@ -146,6 +162,7 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name='', append
         plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + '_ROC.png'))
     else:
         plt.show()
+    plt.close()
 
 
 def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='', appendix=''):
@@ -157,6 +174,7 @@ def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='',
         plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + ' ' + title + '.png'))
     else:
         plt.show()
+    plt.close()
 
 
 def plot_positive_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
