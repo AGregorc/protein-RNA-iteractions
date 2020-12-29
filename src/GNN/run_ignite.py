@@ -28,8 +28,6 @@ from Constants import LABEL_NODE_NAME, MODELS_PATH
 from ignite.engine import Events, Engine
 from ignite.metrics import Accuracy, Loss, Metric
 
-torch.multiprocessing.set_sharing_strategy('file_system')
-
 GCNBatch = namedtuple('GCNBatch', ['graph', 'labels'])
 
 

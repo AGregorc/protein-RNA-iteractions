@@ -11,7 +11,11 @@ from dgl.data import save_graphs, load_graphs
 import Constants
 from Data.Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
-torch.multiprocessing.set_sharing_strategy('file_system')
+from sys import platform
+if platform == "linux" or platform == "linux2":
+    import resource
+    rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (8192, rlimit[1]))
 
 
 def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None):
@@ -83,7 +87,14 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
 
     pool = Pool(processes=Constants.NUM_PROCESSES)
     start_time = time.time()
+    print(f'Starting to create {len(dataset_filenames)} graphs with multiprocessing')
     result = pool.map(create_graph_process, map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
+
+    # Wait for all processes.
+    pool.close()
+    pool.join()
+    intermediate_time = time.time()
+    print(f'Create graphs finished in {intermediate_time - start_time:.1f}s')
 
     numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
     num_for_standardization = min(100, len(result))
@@ -106,9 +117,13 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     mean = torch.mean(means, dim=0, dtype=torch.float32)
     std = torch.sqrt(torch.mean(variances, dim=0, dtype=torch.float32))
 
+    print(f'Starting to standardize graphs with multiprocessing in {time.time() - intermediate_time:.1f}s')
+    intermediate_time = time.time()
+    pool = Pool(processes=Constants.NUM_PROCESSES)
     result = pool.map(standardize_graph_process,
                       map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
 
+    print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
     dataset = []
     dataset_filenames = []
     for filename, graph in result:
@@ -120,7 +135,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
 
     print(f'Dataset created in {(time.time() - start_time):.1f}s')
 
-    # Wait for all thread.
+    # Wait for all processes.
     pool.close()
     pool.join()
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
