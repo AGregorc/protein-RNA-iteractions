@@ -1,3 +1,4 @@
+import gc
 import json
 import os
 import time
@@ -12,8 +13,10 @@ import Constants
 from Data.Preprocess import create_graph_sample, save_feat_word_to_ixs, load_feat_word_to_ixs
 
 from sys import platform
+
 if platform == "linux" or platform == "linux2":
     import resource
+
     rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (8192, rlimit[1]))
 
@@ -23,7 +26,8 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
         word_to_ixs = {}
     parser = PDBParser()
     with warnings.catch_warnings(record=True):
-        structure = parser.get_structure(os.path.splitext(filename)[0], os.path.join(directory_path, filename))
+        with open(os.path.join(directory_path, filename)) as f:
+            structure = parser.get_structure(os.path.splitext(filename)[0], f)
     model = structure[0]
     # print(structure)
     # chains = list(model.get_chains())
@@ -31,7 +35,14 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
     if standardize:
         numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
         filename, graph = standardize_graph_process((filename, graph, standardize[0], standardize[1], numerical_cols))
+
+    del parser, structure, model
     return graph, atoms, pairs, labels
+
+
+def call_gc():
+    garbage = gc.collect()
+    print(f'Garbage removed: {garbage}')
 
 
 def create_graph_process(args):
@@ -43,7 +54,9 @@ def create_graph_process(args):
         print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'[{os.getpid()}] Error from file {my_filename} {(time.time() - start_time):.1f}s; {e}')
+        call_gc()
         return my_filename, None
+    call_gc()
     return my_filename, graph
 
 
@@ -89,6 +102,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     start_time = time.time()
     print(f'Starting to create {len(dataset_filenames)} graphs with multiprocessing')
     result = pool.map(create_graph_process, map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
+    call_gc()
 
     # Wait for all processes.
     pool.close()
@@ -122,7 +136,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     pool = Pool(processes=Constants.NUM_PROCESSES)
     result = pool.map(standardize_graph_process,
                       map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
-
+    call_gc()
     print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
     dataset = []
     dataset_filenames = []
@@ -196,8 +210,10 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
     return dataset, dataset_filenames, word_to_ixs, norm
 
 
-def file_name(path_with_default_name=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE, limit=None, only_res=Constants.GET_ONLY_CA_ATOMS):
-    return path_with_default_name + '_' + str(limit) + '_' + ('res_only' if only_res else 'all_atoms') + Constants.GRAPH_EXTENSION
+def file_name(path_with_default_name=Constants.SAVED_GRAPHS_PATH_DEFAULT_FILE, limit=None,
+              only_res=Constants.GET_ONLY_CA_ATOMS):
+    return path_with_default_name + '_' + str(limit) + '_' + (
+        'res_only' if only_res else 'all_atoms') + Constants.GRAPH_EXTENSION
 
 
 def sort_split_dataset(data, data_filenames, pos_neg_ratio=0.14):
