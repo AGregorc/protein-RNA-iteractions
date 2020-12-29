@@ -91,22 +91,19 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
             # dataset_dict[filename] = idx
             dataset_filenames.append(filename)
             idx += 1
-
         if limit is not None and idx >= limit:
             break
 
     word_to_ixs = manager.dict()
     lock = manager.Lock()
 
-    pool = Pool(processes=Constants.NUM_PROCESSES)
     start_time = time.time()
     print(f'Starting to create {len(dataset_filenames)} graphs with multiprocessing')
-    result = pool.map(create_graph_process, map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
+    with Pool(processes=Constants.NUM_PROCESSES) as pool:
+        result = pool.map(create_graph_process,
+                          map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
     call_gc()
 
-    # Wait for all processes.
-    pool.close()
-    pool.join()
     intermediate_time = time.time()
     print(f'Create graphs finished in {intermediate_time - start_time:.1f}s')
 
@@ -133,9 +130,9 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
 
     print(f'Starting to standardize graphs with multiprocessing in {time.time() - intermediate_time:.1f}s')
     intermediate_time = time.time()
-    pool = Pool(processes=Constants.NUM_PROCESSES)
-    result = pool.map(standardize_graph_process,
-                      map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
+    with Pool(processes=Constants.NUM_PROCESSES) as pool:
+        result = pool.map(standardize_graph_process,
+                          map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
     call_gc()
     print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
     dataset = []
