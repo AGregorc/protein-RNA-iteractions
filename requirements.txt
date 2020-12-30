@@ -1,13 +1,13 @@
 biopython==1.76
-dgl-cuda10.1==0.4.3
+dgl-cu102==0.4.3
 matplotlib==3.2.1
 networkx==2.4
 numpy
 scikit-learn
 scipy==1.4.1
-pytorch==1.4.0
+torch==1.4.0
 torchvision==0.5.0
 tqdm==4.45.0
-ignite==0.4.2
+pytorch-ignite==0.4.2
 Flask==1.1.2
 flask-cors
