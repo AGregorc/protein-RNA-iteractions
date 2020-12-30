@@ -1,13 +1,19 @@
+####################################################################
+# Requirements for anaconda environment
+# Run it with:
+# conda install --file requirements.txt -c pytorch -c dglteam
+####################################################################
+
 biopython==1.76
-dgl-cu102==0.4.3
-matplotlib==3.2.1
-networkx==2.4
+dgl-cuda10.1==0.4.3
+matplotlib
 numpy
 scikit-learn
-scipy==1.4.1
-torch==1.4.0
-torchvision==0.5.0
-tqdm==4.45.0
-pytorch-ignite==0.4.2
+scipy
+pytorch==1.4.0
+torchvision
+tqdm
+ignite==0.4.2
 Flask==1.1.2
 flask-cors
+requests
