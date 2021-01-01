@@ -1,15 +1,17 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 from Constants import NODE_FEATURES_NAME
 
 
 class NodeEmbeddingLayer(nn.Module):
 
-    def __init__(self, in_feats, out_feats, embedding_dim=2, word_to_ixs=None):
+    def __init__(self, in_feats, out_feats, embedding_dim=2, dropout_p=0.4, word_to_ixs=None):
         super(NodeEmbeddingLayer, self).__init__()
         # if vocab_sizes is None:
         #     vocab_sizes = get_feat_wti_lens()
+        self.dropout = nn.Dropout(p=dropout_p)
 
         self.numerical_cols = [i for i in range(in_feats) if i not in word_to_ixs.keys()]
         self.col_to_embedding = {}
@@ -20,7 +22,9 @@ class NodeEmbeddingLayer(nn.Module):
             self.emb_size += embedding_dim - 1  # -1 because we eliminate one col from in_feats
         self.col_to_embedding = nn.ModuleDict(self.col_to_embedding)
 
+        self.b_norm_in = nn.BatchNorm1d(num_features=self.emb_size)
         self.linear = nn.Linear(self.emb_size, out_feats)
+        self.b_norm_out = nn.BatchNorm1d(num_features=out_feats)
 
     def forward(self, g_and_features):
         if type(g_and_features) is tuple:
@@ -37,4 +41,4 @@ class NodeEmbeddingLayer(nn.Module):
             #             print('dtypes: ', embeds.dtype, result.dtype)
             result = torch.cat((result, embeds), 1)
 
-        return self.linear(result)
+        return self.dropout(F.relu(self.b_norm_out(self.linear(self.b_norm_in(result)))))

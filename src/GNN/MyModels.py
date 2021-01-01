@@ -15,6 +15,9 @@ from GNN.NetGraphConv import NetGraphConv
 from GNN.NetLinear import NetLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
 
+# General net structure:
+# -> Neural Layer -> BatchNorm -> ReLu(or other activation) -> Dropout -> Neural Layer ->
+
 
 class MyModels:
     def __init__(self, word_to_ixs, seed=7):
@@ -34,7 +37,7 @@ class MyModels:
             'first_more_GraphConvs_then_linear':  # sploh ne overfitta enega grafa
                 NetSequenceWrapper(
                     InitialDataLayer(word_to_ixs=word_to_ixs),
-                    NetFirstGraphConvThenLinear(hidden_conv_sizes=[256, 400, 400],
+                    NetFirstGraphConvThenLinear(hidden_conv_sizes=[256, 128, 128],
                                                 hidden_linear_sizes=[128, 128, 64, 64, 32, 16])
                 ),
             'first_linear_then_more_GraphConvs_then_linear':  # sploh ne overfitta enega grafa

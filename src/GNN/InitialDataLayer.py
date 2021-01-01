@@ -17,10 +17,9 @@ class InitialDataLayer(nn.Module):
                  dropout_p=0.4, word_to_ixs=None):
         super(InitialDataLayer, self).__init__()
         # assert len(hidden_conv_sizes) > 0
-        self.dropout = nn.Dropout(p=dropout_p)
 
-        self.edge_layer = EdgeLayer(edge_in_feats, edge_out_feats)
-        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats, word_to_ixs=word_to_ixs)
+        # self.edge_layer = EdgeLayer(edge_in_feats, edge_out_feats)
+        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats, dropout_p=dropout_p, word_to_ixs=word_to_ixs)
         # out_num = node_out_feats + edge_out_feats
 
     def __call__(self, *input, **kwargs) -> typing.Any:
@@ -32,7 +31,8 @@ class InitialDataLayer(nn.Module):
         else:
             g = g_and_features
 
-        edge_h = F.relu(self.edge_layer(g))
-        node_h = F.relu(self.node_layer(g))
-        h = torch.cat((edge_h, node_h), 1)
+        # edge_h = F.relu(self.edge_layer(g))
+        node_h = self.node_layer(g)
+        # h = torch.cat((edge_h, node_h), 1)
+        h = node_h
         return g, h

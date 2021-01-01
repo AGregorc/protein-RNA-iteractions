@@ -24,6 +24,9 @@ def predict(net, dataset):
 
 
 def majority_model_metrics(dataset: list, do_plot=True, save=False):
+    model_name = 'majority_classifier'
+    if save:
+        Constants.set_model_directory(model_name)
     y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
     for graph in dataset[1:]:
         y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
@@ -33,7 +36,7 @@ def majority_model_metrics(dataset: list, do_plot=True, save=False):
     all_predictions = {
         'y_pred': y_pred,
     }
-    print_metrics(y_true, all_predictions, 'majority_classifier', do_plot, save)
+    print_metrics(y_true, all_predictions, model_name, do_plot, save)
 
 
 def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True, save=False):
@@ -45,6 +48,9 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
     :param do_plot: if true it plots roc and other visualizations
     :return: accuracy, precision, recall, f1 scores
     """
+    if save:
+        Constants.set_model_directory(print_model_name)
+
     model.eval()
     y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
     for graph in dataset[1:]:

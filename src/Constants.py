@@ -19,6 +19,15 @@ if not os.path.exists(PDB_PATH):
     os.makedirs(PDB_PATH)
 if not os.path.exists(DSSP_PATH):
     os.makedirs(DSSP_PATH)
+if not os.path.exists(MODELS_PATH):
+    os.makedirs(MODELS_PATH)
+
+
+def set_model_directory(model_name):
+    model_path = os.path.join(MODELS_PATH, model_name)
+    if not os.path.exists(model_path):
+        os.makedirs(model_path)
+
 
 GET_ONLY_CA_ATOMS = False
 
@@ -87,6 +96,7 @@ DSSP_FEATURES_NUM = 13
 NODE_FEATURES_NAME = 'features'
 NODE_FEATURES_NUM = 5 + len(NODE_APPENDED_FEATURES) + len(NODE_GROUP_FEATURES) + DSSP_FEATURES_NUM
 EDGE_FEATURE_NAME = 'relative_position'
-EDGE_FEATURE_NUM = 4
+# EDGE_FEATURE_NUM = 4
+EDGE_FEATURE_NUM = 0  # Ignoring edge features for now
 
 COORDINATES_GRAPH_NAME = 'coordinates'
