@@ -47,3 +47,10 @@ cd protein-RNA-iteractions/
 python3 -m pip install -r requirements.txt
 ```
 
+
+
+
+## Useful tips
+```
+watch -n 0.5 nvidia-smi
+```

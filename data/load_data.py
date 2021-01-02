@@ -80,7 +80,7 @@ def load_data(start_pdb=0, limit=None):
         for pdb in f:
             pdbs.append(pdb.strip())
 
-    print(f'Number of .pdbs: {len(pdbs)}')
+    print(f'Number of .pdbs: {len(pdbs)}, loading {limit} of them')
 
     i = 0
     if limit is None:
@@ -116,4 +116,5 @@ def load_data(start_pdb=0, limit=None):
 
 
 if __name__ == '__main__':
-    load_data(limit=5)
+    limit = int(input('How many pdbs do you want to load? '))
+    load_data(limit=limit)

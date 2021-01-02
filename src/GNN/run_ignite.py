@@ -102,10 +102,10 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         model_name='unknown', log_dir=None):
     start_time = time.time()
 
-    writer = None
-    if log_dir is not None and log_dir != '':
-        current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-        writer = SummaryWriter(log_dir=log_dir+current_time)
+    # writer = None
+    # if log_dir is not None and log_dir != '':
+    #     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+    #     writer = SummaryWriter(log_dir=log_dir+current_time)
 
     if device is None:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -165,8 +165,8 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     @trainer.on(Events.ITERATION_COMPLETED(every=log_interval))
     def log_training_loss(engine):
         whole_training_history['loss'].append(engine.state.output)
-        if writer is not None:
-            writer.add_scalar("training/loss", engine.state.output, engine.state.iteration)
+        # if writer is not None:
+        #     writer.add_scalar("training/loss", engine.state.output, engine.state.iteration)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_results(engine):
@@ -180,9 +180,9 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
               f'Avg accuracy {avg_accuracy:.4f} |')
         training_history['accuracy'].append(avg_accuracy)
         training_history['loss'].append(avg_loss)
-        if writer is not None:
-            writer.add_scalar("training/avg_loss", avg_loss, engine.state.epoch)
-            writer.add_scalar("training/avg_accuracy", avg_accuracy, engine.state.epoch)
+        # if writer is not None:
+        #     writer.add_scalar("training/avg_loss", avg_loss, engine.state.epoch)
+        #     writer.add_scalar("training/avg_accuracy", avg_accuracy, engine.state.epoch)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
@@ -196,15 +196,15 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         #       f'Avg accuracy {avg_accuracy:.4f} |')
         validation_history['accuracy'].append(avg_accuracy)
         validation_history['loss'].append(avg_loss)
-        if writer is not None:
-            writer.add_scalar("valdation/avg_loss", avg_loss, engine.state.epoch)
-            writer.add_scalar("valdation/avg_accuracy", avg_accuracy, engine.state.epoch)
+        # if writer is not None:
+        #     writer.add_scalar("valdation/avg_loss", avg_loss, engine.state.epoch)
+        #     writer.add_scalar("valdation/avg_accuracy", avg_accuracy, engine.state.epoch)
 
     # kick everything off
     trainer.run(train_loader, max_epochs=epochs)
 
-    if writer is not None:
-        writer.close()
+    # if writer is not None:
+    #     writer.close()
 
     print(f'Model trained in {(time.time() - start_time):.1f}s')
     return training_history, validation_history, whole_training_history

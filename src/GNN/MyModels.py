@@ -79,7 +79,7 @@ class MyModels:
                 )
         }
 
-    def load_models(self, model_name):
+    def load_models(self, model_name, device):
         model = copy.deepcopy(self.my_models[model_name])
         to_load = {'model': model}
         # checkpoint_fp = "../data/models/best/best_model_364_loss=-0.3888.pt"
@@ -93,7 +93,7 @@ class MyModels:
                 best_loss = loss
                 best_file = name
 
-        checkpoint = torch.load(join(path, best_file))
+        checkpoint = torch.load(join(path, best_file), map_location=device)
         Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
 
         return model, best_loss
