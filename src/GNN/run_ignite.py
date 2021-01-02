@@ -152,7 +152,7 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     train_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
     val_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
 
-    handler = EarlyStopping(patience=20, score_function=score_function, trainer=trainer)
+    handler = EarlyStopping(patience=50, score_function=score_function, trainer=trainer)
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     to_save = {'model': model}
