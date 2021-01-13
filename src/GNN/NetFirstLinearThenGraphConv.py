@@ -3,8 +3,7 @@ import typing
 from torch import nn
 from torch.nn import Linear
 
-from GNN.NetGraphConv import NetGraphConv
-from GNN.NetLinear import NetLinear
+from GNN.HiddenLayers import NetLinear, NetGraphConv
 
 
 class NetFirstLinearThenGraphConv(nn.Module):

@@ -1,12 +1,9 @@
 import typing
 
-import torch.nn.functional as F
-from dgl.nn.pytorch import GraphConv
 from torch import nn
 from torch.nn import Linear
 
-from GNN.NetLinear import NetLinear
-from GNN.NetGraphConv import NetGraphConv
+from GNN.HiddenLayers import NetLinear, NetGraphConv
 
 
 class NetFirstGraphConvThenLinear(nn.Module):

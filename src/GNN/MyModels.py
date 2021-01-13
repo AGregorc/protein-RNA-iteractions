@@ -8,11 +8,10 @@ from torch import nn
 
 import Constants
 from GNN.ConcatNets import ConcatNets
+from GNN.HiddenLayers import NetLinear, NetGraphConv, NetGATConv
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetFirstLinearThenGraphConv import NetFirstLinearThenGraphConv
-from GNN.NetGraphConv import NetGraphConv
-from GNN.NetLinear import NetLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
 
 # General net structure:
@@ -40,14 +39,27 @@ class MyModels:
                     NetFirstGraphConvThenLinear(hidden_conv_sizes=[256, 128, 128],
                                                 hidden_linear_sizes=[128, 128, 64, 64, 32, 16])
                 ),
-            'first_linear_then_more_GraphConvs_then_linear':  # sploh ne overfitta enega grafa
+            'first_linear_then_more_GraphConvs_then_linear':
                 NetSequenceWrapper(
                     InitialDataLayer(word_to_ixs=word_to_ixs),
                     NetFirstLinearThenGraphConv(out_features=64, hidden_linear_sizes=[256, 128, 64, 32, 16],
                                                 hidden_conv_sizes=[64]),
                     NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
                 ),
-
+            'design_space_inspired':
+                NetSequenceWrapper(
+                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    NetFirstLinearThenGraphConv(out_features=64, hidden_linear_sizes=[256, 128, 64],
+                                                hidden_conv_sizes=[64, 100, 64]),
+                    NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
+                ),
+            'design_space_gat':
+                NetSequenceWrapper(
+                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    NetLinear(out_features=64, hidden_linear_sizes=[256, 128, 64]),
+                    NetGATConv(in_features=64, out_features=64, hidden_gat_sizes=[64, 100, 64]),
+                    NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
+                ),
             'two_branches_small':  # lahko overfitta <3
                 NetSequenceWrapper(
                     ConcatNets([
