@@ -13,6 +13,7 @@ from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
 from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window, plot_training_history
 from Data.Preprocess import is_labeled_positive
+from split_dataset import get_train_val_test_data
 
 
 def data(limit=1424, save=False):
@@ -20,11 +21,11 @@ def data(limit=1424, save=False):
 
     if save:
         save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
-    train_d, test_val_d, train_f, test_val_f = train_test_split(dataset, dataset_filenames, shuffle=False,
-                                                                test_size=0.4)
-    val_d, test_d, val_f, test_f = train_test_split(test_val_d, test_val_f, shuffle=False, test_size=0.5)
 
-    del dataset, dataset_filenames, test_val_d, test_val_f, test_d, test_f
+    train_d, train_f, val_d, val_f, test_d, test_f = get_train_val_test_data(dataset, dataset_filenames)
+    dataset_info(train_d, val_d, test_d)
+
+    del dataset, dataset_filenames, test_d, test_f
     return train_d, train_f, val_d, val_f, word_to_ixs
 
 

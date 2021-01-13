@@ -7,13 +7,13 @@ from Data.Data import get_dataset
 from Data.Evaluate import dataset_info
 
 
-def randomized_stratified_group_split(dataset, dataset_filenames, distributions, max_diff=0.5, max_tries=100):
+def randomized_stratified_group_split(dataset, dataset_filenames, distributions, max_diff=0.2, max_tries=100):
     assert sum(distributions) == 1
     assert len(distributions) == 3  # train, val, test
     val_te_size = distributions[1] + distributions[2]
     test_size = distributions[2] / val_te_size
 
-    best_diff = 10000000
+    best_diff = 100
     best_trf = None
     best_valf = None
     best_tef = None
@@ -29,7 +29,7 @@ def randomized_stratified_group_split(dataset, dataset_filenames, distributions,
         vte = abs(labels_p[1] - labels_p[2])
         trte = abs(labels_p[0] - labels_p[2])
         tmp_diff = max(trv, vte, trte)
-        # print(f'tmp diff: {tmp_diff}')
+        print(f'{i} curr diff: {tmp_diff}')
         if tmp_diff < max_diff:
             return train_f, val_f, test_f
 
@@ -75,7 +75,6 @@ def get_train_val_test_data(dataset, dataset_filenames, split_file=TRAIN_VAL_TES
 
 
 def split_and_save(data_limit):
-
     dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=data_limit)
     train_f, val_f, test_f = randomized_stratified_group_split(dataset, dataset_filenames, [0.6, 0.2, 0.2])
     split_dict = {
@@ -84,12 +83,12 @@ def split_and_save(data_limit):
         'test': test_f
     }
     with open(TRAIN_VAL_TEST_SPLIT_FILE_PATH, 'w') as f:
-        json.dump(split_dict, f)
+        json.dump(split_dict, f, indent=2)
 
     train_d, train_f, val_d, val_f, test_d, test_f = get_train_val_test_data(dataset, dataset_filenames)
     dataset_info(train_d, val_d, test_d)
 
 
 if __name__ == '__main__':
-    data_limit = 10
+    data_limit = 1424
     split_and_save(data_limit)
