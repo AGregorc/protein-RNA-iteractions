@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR, NODE_FEATURES_NUM
 from Data.Data import get_dataset, save_dataset
-from Data.Evaluate import calculate_metrics, majority_model_metrics
+from Data.Evaluate import calculate_metrics, majority_model_metrics, dataset_info
 from GNN.MyModels import MyModels
 from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer

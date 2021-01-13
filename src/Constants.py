@@ -23,6 +23,9 @@ if not os.path.exists(MODELS_PATH):
     os.makedirs(MODELS_PATH)
 
 
+TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
+
+
 def set_model_directory(model_name):
     model_path = os.path.join(MODELS_PATH, model_name)
     if not os.path.exists(model_path):

@@ -52,18 +52,15 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
         Constants.set_model_directory(print_model_name)
 
     model.eval()
-    y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
-    for graph in dataset[1:]:
-        y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
-    y_true = y_true.cpu()
+    y_true = _get_y_true(dataset)
     output = predict(model, dataset)
 
     y_pred = output.argmax(dim=1)
     y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
 
     # Calculate confidence probabilities in a different way
-    is_not_p = torch.sigmoid(output[:, 0])
-    is_in_p = torch.sigmoid(output[:, 1])
+    is_not_p = torch.sigmoid(output[:, 0])  # Is not in interaction
+    is_in_p = torch.sigmoid(output[:, 1])  # Is in interaction
 
     y_interaction_percent = is_in_p
     y_reverse_interaction_percent = 1 - is_not_p
@@ -151,6 +148,13 @@ def _get(y_true, y_pred, percentages):
     return confusion_mtx, f1, precision, recall, rmse
 
 
+def _get_y_true(dataset):
+    y_true = dataset[0].ndata[LABEL_NODE_NAME].cpu()
+    for graph in dataset[1:]:
+        y_true = torch.cat((y_true, graph.ndata[LABEL_NODE_NAME].cpu()), dim=0)
+    y_true = y_true.cpu()
+    return y_true
+
 def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name='', appendix=''):
     plt.figure()
     lw = 2
@@ -189,3 +193,31 @@ def plot_positive_hist(y_true, y_pred_percent, save=False, model_name='', append
 
 def plot_negative_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
     _pos_neg_hist(y_true, y_pred_percent, 0, 'Negative histogram', save, model_name, appendix)
+
+
+def dataset_info(train, validation, test, do_print=True):
+    y_train = _get_y_true(train)
+    y_val = _get_y_true(validation)
+    y_test = _get_y_true(test)
+
+    train_count = torch.bincount(y_train)
+    val_count = torch.bincount(y_val)
+    test_count = torch.bincount(y_test)
+
+    i_p = lambda c: 100 * float(c[1]) / float(c[0] + c[1])
+    labels_p = [i_p(train_count), i_p(val_count), i_p(test_count)]
+
+    all_atoms = len(y_train) + len(y_val) + len(y_test)
+    all_pdbs = len(train) + len(validation) + len(test)
+    d_p = lambda d: len(d) / all_atoms
+    pdb_p = lambda p: len(p) / all_pdbs
+
+    if do_print:
+        print('\nDataset info:')
+        print(f'Counts: {train_count}, {val_count}, {test_count}')
+        print(f'Interaction percentage: {labels_p[0]:.2f}%, {labels_p[1]:.2f}%, {labels_p[2]:.2f}%')
+        print(f'Atom distribution: {d_p(y_train):.2f}, {d_p(y_val):.2f}, {d_p(y_test):.2f}')
+        print(f'Pdb distribution: {pdb_p(train):.2f}, {pdb_p(validation):.2f}, {pdb_p(test):.2f}')
+        print()
+        print()
+    return labels_p
