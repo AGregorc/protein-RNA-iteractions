@@ -39,7 +39,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
                                                          device=device,
                                                          criterion=criterion,
                                                          batch_size=10,
-                                                         epochs=1000,
+                                                         epochs=10000,
                                                          model_name=model_name)
         print(f'Run for {model_name} is done\n\n')
 
@@ -53,9 +53,9 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
 
 def main():
     data_limit = 1424
-    model_name = 'just_linear'
+    model_name = 'all'
     do_train = True
-    metrics = True
+    metrics = False
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
