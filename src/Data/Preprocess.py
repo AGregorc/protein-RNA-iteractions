@@ -61,7 +61,7 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     # if plot:
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
-    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=True,
+    G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=False,
                          node_features=atom_features, labels=labels, coordinates=positions)
     assert G.number_of_nodes() == len(protein_atoms)
 

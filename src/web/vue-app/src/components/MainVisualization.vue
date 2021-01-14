@@ -7,7 +7,10 @@
       <img alt="Vue logo" src="@/assets/img/logo.png">
       <p> Insert pdb file </p>
       <label>
-        <input type="text" v-model="pdb_text">
+        <input list="pdb_list" type="text" v-model="pdb_text">
+        <datalist id="pdb_list">
+          <option v-for="pdb in all_pdbs" :value="pdb" :key="pdb"/>
+        </datalist>
 
       </label>
       <button @click="load"> Load </button>
@@ -30,6 +33,13 @@
         <input id="res-labels" type="checkbox" v-model="toggle_res_labels">
         <label for="res-labels">Show residue labels</label>
         <br>
+        <br>
+        <label for="pred_threshold">Prediction threshold </label><span v-text="curr_threshold"></span>
+        <br>
+        <input id="pred_threshold" type="range" min="0" max="1" v-model="curr_threshold" step="0.01" />
+        <br>
+        <button @click="to_optimal">To optimal threshold</button>
+        <br>
       </div>
     </div>
   </teleport>
@@ -44,6 +54,7 @@ export default {
   name: "MainVisualization",
   data: function () {
     return {
+      all_pdbs: [],
       is_model_visible: false,
       pdb_text: '',
       predictions: undefined,
@@ -58,6 +69,8 @@ export default {
       protein_style_selected: 'sphere',
       rna_hide: false,
       toggle_res_labels: false,
+      optimal_threshold: 0.5001,
+      curr_threshold: 0.5,
     }
   },
   watch: {
@@ -71,14 +84,26 @@ export default {
     toggle_res_labels: function () {
       this.resLabels();
     },
+    curr_threshold: function () {
+      this.changeProteinStyle();
+    }
   },
   mounted() {
     let element = document.getElementById('container-01');
     let config = { backgroundColor: 'gray' };
     viewer = window.$3Dmol.createViewer( element, config );
+    API.axios.get(API.ListAllPdbsURL)
+      .then(response => {
+        console.log(response.data.all_pdbs);
+        this.all_pdbs = response.data.all_pdbs;
+      })
   },
   methods: {
     load() {
+      if (!this.all_pdbs.includes(this.pdb_text) && !this.all_pdbs.includes(this.pdb_text+'.pdb')) {
+        alert('Sorry but we do not recognize this pdb ' + this.pdb_text);
+        return;
+      }
       API.axios
         .get(API.GetPredictionsURL + this.pdb_text)
         .then(response => {
@@ -111,7 +136,7 @@ export default {
     },
     isInInteraction(atom) {
       // console.log(atom);
-      return this.predictions[atom.serial] === 1 ? 'red' : 'white';
+      return this.predictions[atom.serial] > this.curr_threshold ? 'red' : 'white';
     },
     resLabels() {
       if (this.toggle_res_labels) {
@@ -124,6 +149,9 @@ export default {
     },
     recenter() {
       viewer.zoomTo();
+    },
+    to_optimal() {
+      this.curr_threshold = this.optimal_threshold;
     },
   }
 }

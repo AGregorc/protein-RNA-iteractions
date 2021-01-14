@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 
 from flask import Flask
@@ -17,7 +18,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 limit = 5
 dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
-del dataset, dataset_filenames
+del dataset
 
 
 @app.route('/')
@@ -25,9 +26,17 @@ def hello_world():
     return 'Hello, World!'
 
 
+@app.route('/api/list_all_pdbs')
+def list_all_pdbs():
+    return {
+        'all_pdbs': dataset_filenames
+    }
+
+
 @app.route('/api/get_predictions/<pdb>')
 def get_predictions(pdb):
-    pdb = pdb + '.pdb'
+    if not pdb.endswith('.pdb'):
+        pdb = pdb + '.pdb'
     _, atoms, pairs, labels = my_pdb_parser(os.path.join(PDB_PATH, pdb), word_to_ixs=word_to_ixs,
                                             standardize=standardize)
     model = atoms[0].get_parent().get_parent().get_parent()
@@ -37,7 +46,7 @@ def get_predictions(pdb):
             proteins.append(chain.id)
     atom_dict = {}
     for atom in atoms:
-        atom_dict[atom.serial_number] = is_labeled_positive(atom) + 0
+        atom_dict[atom.serial_number] = min(max(is_labeled_positive(atom) + 0.0 + random.uniform(-0.4, 0.4), 0), 1)
 
     pdb_file = None
     with open(os.path.join(PDB_PATH, pdb), 'r') as f:
@@ -45,5 +54,6 @@ def get_predictions(pdb):
     return {
         'protein_chains': proteins,
         'predictions': atom_dict,
+        'optimal_threshold': 0.5,
         'file': pdb_file,
     }
