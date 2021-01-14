@@ -34,7 +34,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
 
     print(net)
     if do_train:
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 1.6], device=device))
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 6.0], device=device))
         training_h, validation_h, whole_training_h = run(net, train_d, val_d,
                                                          device=device,
                                                          criterion=criterion,

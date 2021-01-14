@@ -8,7 +8,7 @@ from torch.nn import Linear
 
 class HiddenLayers(nn.Module):
     def __init__(self, LayersTypeClass, graph_needed, in_features=64, out_features=2,
-                 hidden_sizes=None, dropout_p=0.2):
+                 hidden_sizes=None, dropout_p=0.2, **layerargs):
         super(HiddenLayers, self).__init__()
 
         if hidden_sizes is None:
@@ -21,7 +21,7 @@ class HiddenLayers(nn.Module):
         self.hidden_layers = []
         self.hidden_b_norms = []
         for out_hidden in hidden_sizes:
-            self.hidden_layers.append(LayersTypeClass(prev_hidden, out_hidden))
+            self.hidden_layers.append(LayersTypeClass(prev_hidden, out_hidden, **layerargs))
             self.hidden_b_norms.append(nn.BatchNorm1d(out_hidden))
             prev_hidden = out_hidden
         self.hidden_layers = nn.ModuleList(self.hidden_layers)
@@ -61,5 +61,5 @@ class NetGraphConv(HiddenLayers):
 class NetGATConv(HiddenLayers):
     def __init__(self, in_features=64, out_features=2,
                  hidden_gat_sizes=None, dropout_p=0.2):
-        super().__init__(GATConv, True, in_features, out_features, hidden_gat_sizes, dropout_p)
+        super().__init__(GATConv, True, in_features, out_features, hidden_gat_sizes, dropout_p, num_heads=3)
 
