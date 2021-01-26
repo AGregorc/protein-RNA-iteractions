@@ -9,10 +9,12 @@ from torch import nn
 
 import Constants
 from GNN.ConcatNets import ConcatNets
-from GNN.HiddenLayers import NetLinear, NetGraphConv, NetGATConv
 from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetFirstLinearThenGraphConv import NetFirstLinearThenGraphConv
+from GNN.NetGATConv import NetGATConv
+from GNN.NetGraphConv import NetGraphConv
+from GNN.NetLinear import NetLinear
 from GNN.NetSequenceWrapper import NetSequenceWrapper
 
 
@@ -113,7 +115,7 @@ class MyModels:
             old_key = old_key.replace('hidden_conv_layers', 'hidden_layers')
             return old_key
 
-        rename_state_dict_keys(join(path, best_file), key_transformation, device)
+        # rename_state_dict_keys(join(path, best_file), key_transformation, device)  -> produced weird predictions
 
         checkpoint = torch.load(join(path, best_file), map_location=device)
         Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)

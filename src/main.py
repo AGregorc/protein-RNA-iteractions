@@ -32,7 +32,7 @@ def data(limit=1424, save=False):
 def train_load_model(my_models, model_name, do_train, train_d, val_d, device, calc_metrics=True):
     net = my_models.my_models[model_name]
 
-    print(net)
+    print(net, model_name)
     if do_train:
         criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 6.0], device=device))
         training_h, validation_h, whole_training_h = run(net, train_d, val_d,
