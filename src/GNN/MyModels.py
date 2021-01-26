@@ -1,4 +1,5 @@
 import copy
+from collections import OrderedDict
 from os import listdir
 from os.path import isfile, join, splitext
 
@@ -13,6 +14,7 @@ from GNN.InitialDataLayer import InitialDataLayer
 from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
 from GNN.NetFirstLinearThenGraphConv import NetFirstLinearThenGraphConv
 from GNN.NetSequenceWrapper import NetSequenceWrapper
+
 
 # General net structure:
 # -> Neural Layer -> BatchNorm -> ReLu(or other activation) -> Dropout -> Neural Layer ->
@@ -105,8 +107,46 @@ class MyModels:
                 best_loss = loss
                 best_file = name
 
+        # Rename old naming of the parameters.
+        def key_transformation(old_key):
+            old_key = old_key.replace('hidden_linear_layers', 'hidden_layers')
+            old_key = old_key.replace('hidden_conv_layers', 'hidden_layers')
+            return old_key
+
+        rename_state_dict_keys(join(path, best_file), key_transformation, device)
+
         checkpoint = torch.load(join(path, best_file), map_location=device)
         Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
 
         return model, best_loss
 
+
+def rename_state_dict_keys(source, key_transformation, device, target=None):
+    """
+    source             -> Path to the saved state dict.
+    key_transformation -> Function that accepts the old key names of the state
+                          dict as the only argument and returns the new key name.
+    target (optional)  -> Path at which the new state dict should be saved
+                          (defaults to `source`)
+    Example:
+    Rename the key `layer.0.weight` `layer.1.weight` and keep the names of all
+    other keys.
+    ```py
+    def key_transformation(old_key):
+        if old_key == "layer.0.weight":
+            return "layer.1.weight"
+        return old_key
+    rename_state_dict_keys(state_dict_path, key_transformation)
+    ```
+    """
+    if target is None:
+        target = source
+
+    state_dict = torch.load(source, map_location=device)
+    new_state_dict = OrderedDict()
+
+    for key, value in state_dict.items():
+        new_key = key_transformation(key)
+        new_state_dict[new_key] = value
+
+    torch.save(new_state_dict, target)
