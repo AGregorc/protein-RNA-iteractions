@@ -23,6 +23,39 @@ def predict(net, dataset):
     return result
 
 
+def predict_percent(model, dataset, predict_type=None):
+    model.eval()
+    output = predict(model, dataset)
+
+    y_pred = output.argmax(dim=1)
+    y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
+
+    # Calculate confidence probabilities in a different way
+    is_not_p = torch.sigmoid(output[:, 0])  # Is not in interaction
+    is_in_p = torch.sigmoid(output[:, 1])  # Is in interaction
+
+    y_interaction_percent = is_in_p
+    y_reverse_interaction_percent = 1 - is_not_p
+
+    c = torch.stack((y_reverse_interaction_percent, y_interaction_percent), dim=1)
+    y_pick_major_percent = torch.gather(c, 1, torch.unsqueeze(y_pred, 1)).squeeze()
+    y_combine_percent = (y_interaction_percent + y_reverse_interaction_percent) / 2
+
+    y_combine_all_percent = (y_interaction_percent + y_reverse_interaction_percent + y_pick_major_percent) / 3
+
+    all_predictions = {
+        'y_pred': y_pred,
+        'y_interaction_percent': y_interaction_percent,
+        'y_reverse_interaction_percent': y_reverse_interaction_percent,
+        'y_combine_percent': y_combine_percent,
+        'y_pick_major_percent': y_pick_major_percent,
+        'y_combine_all_percent': y_combine_all_percent,
+    }
+    if predict_type is None:
+        return all_predictions
+    return all_predictions[predict_type]
+
+
 def majority_model_metrics(dataset: list, do_plot=True, save=False):
     model_name = 'majority_classifier'
     if save:
@@ -51,34 +84,8 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
     if save:
         Constants.set_model_directory(print_model_name)
 
-    model.eval()
     y_true = _get_y_true(dataset)
-    output = predict(model, dataset)
-
-    y_pred = output.argmax(dim=1)
-    y_pred[output[:, 1].argmax(dim=0)] = 1  # at least the most probable atom should be in interaction
-
-    # Calculate confidence probabilities in a different way
-    is_not_p = torch.sigmoid(output[:, 0])  # Is not in interaction
-    is_in_p = torch.sigmoid(output[:, 1])  # Is in interaction
-
-    y_interaction_percent = is_in_p
-    y_reverse_interaction_percent = 1 - is_not_p
-
-    c = torch.stack((y_reverse_interaction_percent, y_interaction_percent), dim=1)
-    y_pick_major_percent = torch.gather(c, 1, torch.unsqueeze(y_pred, 1)).squeeze()
-    y_combine_percent = (y_interaction_percent + y_reverse_interaction_percent) / 2
-
-    y_combine_all_percent = (y_interaction_percent + y_reverse_interaction_percent + y_pick_major_percent) / 3
-
-    all_predictions = {
-        'y_pred': y_pred,
-        'y_interaction_percent': y_interaction_percent,
-        'y_reverse_interaction_percent': y_reverse_interaction_percent,
-        'y_combine_percent': y_combine_percent,
-        'y_pick_major_percent': y_pick_major_percent,
-        'y_combine_all_percent': y_combine_all_percent,
-    }
+    all_predictions = predict_percent(model, dataset, predict_type=None)
     return print_metrics(y_true, all_predictions, print_model_name, do_plot, save)
 
 
