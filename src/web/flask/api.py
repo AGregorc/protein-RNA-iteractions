@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import time
 
 import torch
 from flask import Flask
@@ -49,13 +50,20 @@ def list_all_pdbs():
 def get_predictions(pdb):
     if not pdb.endswith('.pdb'):
         pdb = pdb + '.pdb'
+
+    start = time.time()
+    print(f'Get predictions for {pdb}')
     graph, atoms, pairs, labels = my_pdb_parser(os.path.join(PDB_PATH, pdb), word_to_ixs=word_to_ixs,
                                                 standardize=standardize)
+    t = time.time()
+    print(f'Preprocessed in {t - start}')
     bio_model = atoms[0].get_parent().get_parent().get_parent()
     proteins = []
     for chain in bio_model.get_chains():
         if is_protein(chain):
             proteins.append(chain.id)
+    print(f'Detect proteins in {time.time() - t}')
+    t = time.time()
 
     atom_dict = {}
     predictions = predict_percent(net, [graph], predict_type='y_combine_all_percent')
@@ -64,10 +72,14 @@ def get_predictions(pdb):
         # atom_dict[atom.serial_number] = min(max(is_labeled_positive(atom) + 0.0 + random.uniform(-0.4, 0.4), 0), 1)
         dgl_id = get_dgl_id(atom)
         atom_dict[atom.serial_number] = float(predictions[dgl_id])
+    print(f'Predict atoms in  {time.time() - t}')
+    t = time.time()
 
     pdb_file = None
     with open(os.path.join(PDB_PATH, pdb), 'r') as f:
         pdb_file = f.read()
+    print(f'Read pdb file in {time.time() - t}')
+
     return {
         'protein_chains': proteins,
         'predictions': atom_dict,
