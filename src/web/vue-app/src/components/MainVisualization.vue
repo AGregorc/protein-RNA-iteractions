@@ -5,7 +5,7 @@
     <div class="padding">
 
       <img alt="Vue logo" src="@/assets/img/logo.png">
-      <p> Insert pdb file </p>
+      <p> Insert PDB ID </p>
       <label>
         <input list="pdb_list" type="text" v-model="pdb_text">
         <datalist id="pdb_list">
