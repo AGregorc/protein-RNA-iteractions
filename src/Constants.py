@@ -5,6 +5,7 @@ ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 DATA_PATH = os.path.join(ROOT_PATH, '..', 'data')
 SAVED_GRAPHS_PATH = os.path.join(DATA_PATH, 'preprocessed_data')
 SAVED_GRAPHS_PATH_DEFAULT_FILE = os.path.join(SAVED_GRAPHS_PATH, 'graph_data')
+SAVED_GRAPH_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids')
 GRAPH_EXTENSION = '.bin'
 PDB_PATH = os.path.join(DATA_PATH, 'pdbs')
 DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
@@ -15,6 +16,8 @@ if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
 if not os.path.exists(SAVED_GRAPHS_PATH):
     os.makedirs(SAVED_GRAPHS_PATH)
+if not os.path.exists(SAVED_GRAPH_PATH):
+    os.makedirs(SAVED_GRAPH_PATH)
 if not os.path.exists(PDB_PATH):
     os.makedirs(PDB_PATH)
 if not os.path.exists(DSSP_PATH):

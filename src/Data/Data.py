@@ -4,6 +4,7 @@ import os
 import time
 import warnings
 from multiprocessing import Pool, Manager
+from os import listdir
 
 import torch
 from Bio.PDB import PDBParser
@@ -152,10 +153,17 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None):
+def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None, individual=False):
     if filename is None:
         filename = file_name(limit=limit)
-    save_graphs(filename, dataset)
+
+    if individual:
+        for graph, filename in zip(dataset, dataset_filenames):
+            filename = os.path.splitext(filename)[0]
+            pf = os.path.join(Constants.SAVED_GRAPH_PATH, filename + Constants.GRAPH_EXTENSION)
+            save_graphs(pf, [graph])
+    else:
+        save_graphs(filename, dataset)
 
     fn_no_extension = os.path.splitext(filename)[0]
     filename_df = fn_no_extension + '_filenames.json'
@@ -172,17 +180,32 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
     save_feat_word_to_ixs(filename_wti, word_to_ixs)
 
 
-def load_dataset(filename=None, length=None):
+def load_dataset(filename=None, limit=None, individual=False):
     if filename is None:
-        filename = file_name(limit=length)
-    dataset = load_graphs(filename)
-    dataset = dataset[0]
+        filename = file_name(limit=limit)
 
     fn_no_extension = os.path.splitext(filename)[0]
-    filename_df = fn_no_extension + '_filenames.json'
-    with open(filename_df, 'r') as f:
-        # read the data as binary data stream
-        dataset_filenames = json.load(f)
+    if individual:
+        filenames = listdir(Constants.SAVED_GRAPH_PATH)
+        i = 0
+        dataset = []
+        dataset_filenames = []
+        for fn in filenames:
+            graph = load_graphs(os.path.join(Constants.SAVED_GRAPH_PATH, fn))
+            graph = graph[0][0]
+            dataset.append(graph)
+            dataset_filenames.append(os.path.splitext(fn)[0])
+            i += 1
+            if i >= limit:
+                break
+    else:
+        dataset = load_graphs(filename)
+        dataset = dataset[0]
+
+        filename_df = fn_no_extension + '_filenames.json'
+        with open(filename_df, 'r') as f:
+            # read the data as binary data stream
+            dataset_filenames = json.load(f)
 
     filename_standardize = fn_no_extension + '_standardize.npy'
     with open(filename_standardize, 'rb') as f:
@@ -194,12 +217,12 @@ def load_dataset(filename=None, length=None):
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None):
+def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None, individual=False):
     if load_filename is None:
         load_filename = file_name(limit=limit)
     try:
         start_time = time.time()
-        dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename, length=limit)
+        dataset, dataset_filenames, word_to_ixs, norm = load_dataset(load_filename, limit=limit, individual=individual)
         print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
