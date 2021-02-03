@@ -45,7 +45,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
 
         plot_training_history(training_h, validation_h, model_name=model_name, save=True)
     else:
-        net, loss = my_models.load_models(model_name, device)
+        net, loss, thresholds = my_models.load_models(model_name, device)
     if calc_metrics:
         thresholds = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
         my_models.save_thresholds(model_name, thresholds)

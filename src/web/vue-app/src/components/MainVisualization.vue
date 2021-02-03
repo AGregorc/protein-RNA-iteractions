@@ -34,9 +34,9 @@
         <label for="res-labels">Show residue labels</label>
         <br>
         <br>
-        <label for="pred_threshold">Prediction threshold </label><span v-text="curr_threshold"></span>
+        <label for="pred_threshold">Prediction threshold </label><span v-text="curr_th_text" ></span>
         <br>
-        <input id="pred_threshold" type="range" min="0" max="1" v-model="curr_threshold" step="0.01" />
+        <input id="pred_threshold" type="range" min="0" max="1" v-model="curr_threshold" step="0.01"/>
         <br>
         <button @click="to_optimal">To optimal threshold</button>
         <br>
@@ -71,6 +71,7 @@ export default {
       toggle_res_labels: false,
       optimal_threshold: 0.5,
       curr_threshold: undefined,
+      curr_th_text: '',
     }
   },
   watch: {
@@ -85,6 +86,7 @@ export default {
       this.resLabels();
     },
     curr_threshold: function () {
+      this.curr_th_text = parseFloat(this.curr_threshold).toFixed(2);
       this.changeProteinStyle();
     }
   },
@@ -94,7 +96,7 @@ export default {
     viewer = window.$3Dmol.createViewer( element, config );
     API.axios.get(API.ListAllPdbsURL)
       .then(response => {
-        console.log(response.data.all_pdbs);
+        // console.log(response.data.all_pdbs);
         this.all_pdbs = response.data.all_pdbs;
       })
   },
@@ -107,7 +109,7 @@ export default {
       API.axios
         .get(API.GetPredictionsURL + this.pdb_text)
         .then(response => {
-          console.log(response.data)
+          // console.log(response.data)
           this.predictions = response.data.predictions;
           this.protein_chains = response.data.protein_chains;
           this.optimal_threshold = response.data.optimal_threshold;
@@ -116,12 +118,12 @@ export default {
 
           let file = response.data.file;
 
-          console.log(this.protein_chains);
+          // console.log(this.protein_chains);
 
           let v = viewer;
           v.removeAllModels();
           v.addModel( file, "pdb" );                       /* load data */
-          v.setStyle({}, {cartoon: {colorscheme: 'Jmol'}});  /* default style */
+          v.setStyle({}, {cartoon: {hidden: this.rna_hide, colorscheme: 'Jmol'}});  /* default style */
           this.changeProteinStyle();
           v.zoomTo();                                      /* set camera */
           v.render();                                      /* render scene */
@@ -130,7 +132,7 @@ export default {
         });
     },
     changeProteinStyle() {
-      console.log('change style')
+      // console.log('change style')
       this.protein_chains.forEach(c => {
         let style = {}
         style[this.protein_style_selected] = {colorfunc: this.isInInteraction};
@@ -156,6 +158,9 @@ export default {
     },
     to_optimal() {
       this.curr_threshold = this.optimal_threshold;
+    },
+    restrict_decimal () {
+      this.contract=this.contract.match(/^\d+\.?\d{0,2}/);
     },
   }
 }
