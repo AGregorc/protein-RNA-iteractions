@@ -47,7 +47,8 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
     else:
         net, loss = my_models.load_models(model_name, device)
     if calc_metrics:
-        calculate_metrics(val_d, net, print_model_name=model_name, save=True)
+        thresholds = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
+        my_models.save_thresholds(model_name, thresholds)
     return net
 
 

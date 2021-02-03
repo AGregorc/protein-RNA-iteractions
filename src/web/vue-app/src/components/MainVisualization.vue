@@ -69,8 +69,8 @@ export default {
       protein_style_selected: 'sphere',
       rna_hide: false,
       toggle_res_labels: false,
-      optimal_threshold: 0.5001,
-      curr_threshold: 0.5,
+      optimal_threshold: 0.5,
+      curr_threshold: undefined,
     }
   },
   watch: {
@@ -110,6 +110,10 @@ export default {
           console.log(response.data)
           this.predictions = response.data.predictions;
           this.protein_chains = response.data.protein_chains;
+          this.optimal_threshold = response.data.optimal_threshold;
+          if (this.curr_threshold === undefined)
+            this.curr_threshold = this.optimal_threshold;
+
           let file = response.data.file;
 
           console.log(this.protein_chains);

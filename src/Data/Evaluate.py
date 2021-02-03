@@ -91,11 +91,14 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
 
 def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, save=False):
     string_out = []
+    all_thresholds = {}
     for name, predictions in all_predictions.items():
         fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
         optimal_idx = np.argmax(tpr - fpr)
         optimal_threshold = thresholds[optimal_idx]
         area_under_curve = auc(fpr, tpr)
+        print(name, optimal_threshold, type(str(name)), type(optimal_threshold))
+        all_thresholds[str(name)] = float(optimal_threshold)
 
         y_predicted = predictions > optimal_threshold
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_predicted, predictions)
@@ -131,16 +134,7 @@ def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, 
                 f.write(str_result)
         print(str_result)
 
-    result = {
-        'confusion_matrix': confusion_mtx,
-        'f1': f1,
-        'precision': precision,
-        'recall': recall,
-        'rmse': rmse,
-        'auc': area_under_curve,
-        'optimal_threshold': optimal_threshold,
-    }
-    return result
+    return all_thresholds
 
 
 def _get(y_true, y_pred, percentages):

@@ -1,4 +1,5 @@
 import copy
+import json
 from collections import OrderedDict
 from os import listdir
 from os.path import isfile, join, splitext
@@ -25,6 +26,7 @@ from GNN.NetSequenceWrapper import NetSequenceWrapper
 class MyModels:
     def __init__(self, word_to_ixs, seed=7):
         torch.manual_seed(seed)
+        self.threshold_filename = 'thresholds.json'
         self.my_models = {
             'just_linear':
                 NetSequenceWrapper(
@@ -95,6 +97,17 @@ class MyModels:
                 )
         }
 
+    def save_thresholds(self, model_name, thresholds):
+        path = join(Constants.MODELS_PATH, model_name, self.threshold_filename)
+        with open(path, 'w') as f:
+            json.dump(thresholds, f, indent=2)
+
+    def get_thresholds(self, model_name):
+        path = join(Constants.MODELS_PATH, model_name, self.threshold_filename)
+        with open(path, 'r') as f:
+            thresholds = json.load(f)
+        return thresholds
+
     def load_models(self, model_name, device):
         model = copy.deepcopy(self.my_models[model_name])
         to_load = {'model': model}
@@ -120,7 +133,7 @@ class MyModels:
         checkpoint = torch.load(join(path, best_file), map_location=device)
         Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
 
-        return model, best_loss
+        return model, best_loss, self.get_thresholds(model_name)
 
 
 def rename_state_dict_keys(source, key_transformation, device, target=None):
