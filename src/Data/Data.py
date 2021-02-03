@@ -158,9 +158,9 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
         filename = file_name(limit=limit)
 
     if individual:
-        for graph, filename in zip(dataset, dataset_filenames):
-            filename = os.path.splitext(filename)[0]
-            pf = os.path.join(Constants.SAVED_GRAPH_PATH, filename + Constants.GRAPH_EXTENSION)
+        for graph, fn in zip(dataset, dataset_filenames):
+            fn = os.path.splitext(fn)[0]
+            pf = os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION)
             save_graphs(pf, [graph])
     else:
         save_graphs(filename, dataset)
