@@ -152,7 +152,7 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     train_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
     val_evaluator = create_my_supervised_evaluator(model, metrics=val_metrics)
 
-    handler = EarlyStopping(patience=100, score_function=score_function, trainer=trainer)
+    handler = EarlyStopping(patience=50, score_function=score_function, trainer=trainer)
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     to_save = {'model': model}
@@ -174,10 +174,8 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         metrics = train_evaluator.state.metrics
         avg_accuracy = metrics["accuracy"]
         avg_loss = metrics["loss"]
-        print(f'Train results | '
-              f'Epoch {engine.state.epoch:05d} | '
-              f'Avg loss {avg_loss:.4f} | '
-              f'Avg accuracy {avg_accuracy:.4f} |')
+        print(f'Epoch {engine.state.epoch:05d} | '
+              f'Train: loss {avg_loss:7.4f}, acc {avg_accuracy:7.4f} | ', end='')
         training_history['accuracy'].append(avg_accuracy)
         training_history['loss'].append(avg_loss)
         # if writer is not None:
@@ -190,6 +188,7 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
         metrics = val_evaluator.state.metrics
         avg_accuracy = metrics["accuracy"]
         avg_loss = metrics["loss"]
+        print(f'Val: loss {avg_loss:7.4f}, acc {avg_accuracy:7.4f} |')
         # print(f'Val results   | '
         #       f'Epoch {engine.state.epoch:05d} | '
         #       f'Avg loss {avg_loss:.4f} | '
