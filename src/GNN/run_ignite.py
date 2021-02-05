@@ -99,7 +99,7 @@ def batcher(device):
 
 def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None,
         epochs=10, batch_size=1, log_interval=10,
-        model_name='unknown', log_dir=None):
+        model_name='unknown', log_dir=None, save=True):
     start_time = time.time()
 
     # writer = None
@@ -156,11 +156,12 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     to_save = {'model': model}
-    handler = Checkpoint(to_save, DiskSaver(join(MODELS_PATH, model_name), create_dir=True, require_empty=False),
-                         n_saved=2, score_function=score_function, score_name="loss",
-                         global_step_transform=global_step_from_engine(trainer))
+    if save:
+        handler = Checkpoint(to_save, DiskSaver(join(MODELS_PATH, model_name), create_dir=True, require_empty=False),
+                             n_saved=2, score_function=score_function, score_name="loss",
+                             global_step_transform=global_step_from_engine(trainer))
 
-    val_evaluator.add_event_handler(Events.COMPLETED, handler)
+        val_evaluator.add_event_handler(Events.COMPLETED, handler)
 
     @trainer.on(Events.ITERATION_COMPLETED(every=log_interval))
     def log_training_loss(engine):

@@ -30,18 +30,18 @@ class MyModels:
         self.my_models = {
             'just_linear':
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetLinear(out_features=2, hidden_linear_sizes=[256, 128, 128, 64, 64, 32, 16])
                 ),
             'first_one_GraphConv_then_linear':
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetFirstGraphConvThenLinear(hidden_conv_sizes=[256],
                                                 hidden_linear_sizes=[128, 64, 64, 32, 16])
                 ),
             'first_more_GraphConvs_then_linear':  # sploh ne overfitta enega grafa
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetFirstGraphConvThenLinear(hidden_conv_sizes=[256, 128, 128],
                                                 hidden_linear_sizes=[128, 128, 64, 64, 32, 16])
                 ),
@@ -54,14 +54,14 @@ class MyModels:
                 ),
             'design_space_inspired':
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetFirstLinearThenGraphConv(out_features=64, hidden_linear_sizes=[256, 128, 64],
                                                 hidden_conv_sizes=[64, 100, 64]),
                     NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
                 ),
             'design_space_gat':
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetLinear(out_features=64, hidden_linear_sizes=[256, 128, 64]),
                     NetGATConv(in_features=64, out_features=64, hidden_gat_sizes=[64, 100, 64]),
                     NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
@@ -70,11 +70,11 @@ class MyModels:
                 NetSequenceWrapper(
                     ConcatNets([
                         nn.Sequential(
-                            InitialDataLayer(word_to_ixs=word_to_ixs),
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                             NetLinear(out_features=128, hidden_linear_sizes=[256, 128]),
                         ),
                         nn.Sequential(
-                            InitialDataLayer(word_to_ixs=word_to_ixs),
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                             NetGraphConv(out_features=32, hidden_conv_sizes=[64, 64, 32])
                         ),
                     ]),
@@ -85,11 +85,11 @@ class MyModels:
                 NetSequenceWrapper(
                     ConcatNets([
                         nn.Sequential(
-                            InitialDataLayer(word_to_ixs=word_to_ixs),
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                             NetLinear(out_features=128, hidden_linear_sizes=[256, 128, 64, 64, 32]),
                         ),
                         nn.Sequential(
-                            InitialDataLayer(word_to_ixs=word_to_ixs),
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                             NetGraphConv(out_features=32, hidden_conv_sizes=[64, 64, 128, 128])
                         ),
                     ]),

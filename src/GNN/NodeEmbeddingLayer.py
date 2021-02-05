@@ -1,4 +1,5 @@
 import torch
+from dgl import DGLGraph
 from torch import nn
 import torch.nn.functional as F
 
@@ -38,12 +39,7 @@ class NodeEmbeddingLayer(nn.Module):
         self.b_norm_out = nn.BatchNorm1d(num_features=out_feats)
 
     def forward(self, g_and_features):
-        if type(g_and_features) is tuple:
-            g, _ = g_and_features
-        else:
-            g = g_and_features
-
-        features = g.ndata[NODE_FEATURES_NAME]
+        g, features = g_and_features
 
         # mask ignored columns
         features = features[:, self.mask_ignored]

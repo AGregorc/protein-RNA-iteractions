@@ -11,6 +11,6 @@ class NetSequenceWrapper(nn.Module):
     def __call__(self, *input, **kwargs) -> typing.Any:
         return super().__call__(*input, **kwargs)
 
-    def forward(self, h):
-        _, output = self.sequence(h)
+    def forward(self, h, *args):
+        _, output = self.sequence((h, *args))
         return output
