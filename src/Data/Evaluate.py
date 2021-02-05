@@ -1,6 +1,8 @@
 import os
 
+import dgl
 import torch
+from captum.attr import IntegratedGradients
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, mean_squared_error, roc_curve, \
     auc
 import matplotlib.pyplot as plt
@@ -92,13 +94,15 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
 def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, save=False):
     string_out = []
     all_thresholds = {}
+    all_aucs = {}
+
     for name, predictions in all_predictions.items():
         fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
         optimal_idx = np.argmax(tpr - fpr)
         optimal_threshold = thresholds[optimal_idx]
         area_under_curve = auc(fpr, tpr)
-        print(name, optimal_threshold, type(str(name)), type(optimal_threshold))
         all_thresholds[str(name)] = float(optimal_threshold)
+        all_aucs[str(name)] = area_under_curve
 
         y_predicted = predictions > optimal_threshold
         confusion_mtx, f1, precision, recall, rmse = _get(y_true, y_predicted, predictions)
@@ -134,7 +138,7 @@ def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, 
                 f.write(str_result)
         print(str_result)
 
-    return all_thresholds
+    return all_thresholds, all_aucs
 
 
 def _get(y_true, y_pred, percentages):
@@ -222,3 +226,22 @@ def dataset_info(train, validation, test, do_print=True):
         print()
         print()
     return labels_p
+
+
+def feature_importance(net, graphs, n_graphs=3, n_steps=10):
+    n_graphs = min(n_graphs, len(graphs))
+    input_d = dgl.batch([graphs[i] for i in range(n_graphs)])
+
+    ig = IntegratedGradients(net)
+    ig_attr_test = ig.attribute(input_d.ndata[Constants.NODE_FEATURES_NAME],
+                                additional_forward_args=(dgl.batch([input_d] * n_steps)),
+                                target=1, n_steps=n_steps)
+
+    ig_attr_test_sum = ig_attr_test.detach().numpy().sum(0)
+    ig_attr_test_norm_sum = ig_attr_test_sum / np.linalg.norm(ig_attr_test_sum, ord=1)
+
+    x_list = list(range(Constants.NODE_FEATURES_NUM))
+
+    plt.figure()
+    plt.bar(x_list, ig_attr_test_norm_sum)
+    plt.show()

@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR, NODE_FEATURES_NUM
 from Data.Data import get_dataset, save_dataset
-from Data.Evaluate import calculate_metrics, majority_model_metrics, dataset_info
+from Data.Evaluate import calculate_metrics, majority_model_metrics, dataset_info, feature_importance
 from GNN.MyModels import MyModels
 from GNN.run_ignite import run
 from GNN.InitialDataLayer import InitialDataLayer
@@ -29,7 +29,7 @@ def data(limit=1424, save=False):
     return train_d, train_f, val_d, val_f, word_to_ixs
 
 
-def train_load_model(my_models, model_name, do_train, train_d, val_d, device, calc_metrics=True):
+def train_load_model(my_models, model_name, do_train, train_d, val_d, device, calc_metrics=True, calc_feat_i=False):
     net = my_models.my_models[model_name]
 
     print(net, model_name)
@@ -47,27 +47,30 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
     else:
         net, loss, thresholds = my_models.load_models(model_name, device)
     if calc_metrics:
-        thresholds = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
+        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
         my_models.save_thresholds(model_name, thresholds)
+    if calc_feat_i:
+        feature_importance(net, val_d)
     return net
 
 
 def main():
-    data_limit = 1424
-    model_name = 'all'
-    do_train = True
+    data_limit = 10
+    model_name = 'first_linear_then_more_GraphConvs_then_linear'
+    do_train = False
     metrics = False
+    feat_importance = True
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Number of features', NODE_FEATURES_NUM)
 
-    models = MyModels(word_to_ixs)
+    models = MyModels(word_to_ixs, ignore_columns=[])
     if model_name == 'all':
         for model_name in models.my_models:
-            train_load_model(models, model_name, do_train, train_d, val_d, device, metrics)
+            train_load_model(models, model_name, do_train, train_d, val_d, device, metrics, feat_importance)
     else:
-        train_load_model(models, model_name, do_train, train_d, val_d, device, metrics)
+        train_load_model(models, model_name, do_train, train_d, val_d, device, metrics, feat_importance)
 
     if metrics:
         majority_model_metrics(val_d, save=True)

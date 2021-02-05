@@ -5,15 +5,18 @@
 ####################################################################
 
 biopython==1.76
-dgl-cuda10.1==0.4.3
 matplotlib
 numpy
+tqdm
 scikit-learn
 scipy
+dgl-cuda10.1==0.4.3
+
 pytorch==1.4.0
 torchvision
-tqdm
 ignite==0.4.2
+captum
+
 Flask==1.1.2
 flask-cors
 requests
