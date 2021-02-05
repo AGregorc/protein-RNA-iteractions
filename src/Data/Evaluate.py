@@ -228,7 +228,7 @@ def dataset_info(train, validation, test, do_print=True):
     return labels_p
 
 
-def feature_importance(net, graphs, n_graphs=3, n_steps=10):
+def feature_importance(net, graphs, model_name, n_graphs=3, n_steps=10, save=False):
     n_graphs = min(n_graphs, len(graphs))
     input_d = dgl.batch([graphs[i] for i in range(n_graphs)])
 
@@ -244,4 +244,8 @@ def feature_importance(net, graphs, n_graphs=3, n_steps=10):
 
     plt.figure()
     plt.bar(x_list, ig_attr_test_norm_sum)
-    plt.show()
+
+    if save:
+        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, 'feature_importance.png'))
+    else:
+        plt.show()

@@ -50,16 +50,16 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
         thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
         my_models.save_thresholds(model_name, thresholds)
     if calc_feat_i:
-        feature_importance(net, val_d)
+        feature_importance(net, val_d, model_name, save=True)
     return net
 
 
 def main():
-    data_limit = 10
-    model_name = 'first_linear_then_more_GraphConvs_then_linear'
-    do_train = False
+    data_limit = 1424
+    model_name = 'all'
+    do_train = True
     metrics = False
-    feat_importance = True
+    feat_importance = False
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
