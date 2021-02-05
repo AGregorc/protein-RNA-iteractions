@@ -14,12 +14,13 @@ from GNN.NodeEmbeddingLayer import NodeEmbeddingLayer
 class InitialDataLayer(nn.Module):
     def __init__(self, node_in_feats=NODE_FEATURES_NUM, node_out_feats=64,
                  edge_in_feats=EDGE_FEATURE_NUM, edge_out_feats=8,
-                 dropout_p=0.4, word_to_ixs=None):
+                 dropout_p=0.4, word_to_ixs=None, ignore_columns=None):
         super(InitialDataLayer, self).__init__()
         # assert len(hidden_conv_sizes) > 0
 
         # self.edge_layer = EdgeLayer(edge_in_feats, edge_out_feats)
-        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats, dropout_p=dropout_p, word_to_ixs=word_to_ixs)
+        self.node_layer = NodeEmbeddingLayer(node_in_feats, node_out_feats, dropout_p=dropout_p,
+                                             word_to_ixs=word_to_ixs, ignore_columns=ignore_columns)
         # out_num = node_out_feats + edge_out_feats
 
     def __call__(self, *input, **kwargs) -> typing.Any:

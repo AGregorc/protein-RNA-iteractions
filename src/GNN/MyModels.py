@@ -24,7 +24,7 @@ from GNN.NetSequenceWrapper import NetSequenceWrapper
 
 
 class MyModels:
-    def __init__(self, word_to_ixs, seed=7):
+    def __init__(self, word_to_ixs, ignore_columns=None, seed=7):
         torch.manual_seed(seed)
         self.threshold_filename = 'thresholds.json'
         self.my_models = {
@@ -47,7 +47,7 @@ class MyModels:
                 ),
             'first_linear_then_more_GraphConvs_then_linear':
                 NetSequenceWrapper(
-                    InitialDataLayer(word_to_ixs=word_to_ixs),
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                     NetFirstLinearThenGraphConv(out_features=64, hidden_linear_sizes=[256, 128, 64, 32, 16],
                                                 hidden_conv_sizes=[64]),
                     NetLinear(in_features=64, out_features=2, hidden_linear_sizes=[32, 16, 8, 4])
