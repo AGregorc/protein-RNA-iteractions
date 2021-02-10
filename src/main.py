@@ -39,7 +39,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
                                                          device=device,
                                                          criterion=criterion,
                                                          batch_size=10,
-                                                         epochs=10000,
+                                                         epochs=1,
                                                          model_name=model_name)
         print(f'Run for {model_name} is done\n\n')
 
@@ -56,20 +56,22 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
 
 def main():
     data_limit = 1424
-    model_name = 'all'
+    model_names = ['design_space_gat', 'two_branches_small', 'two_branches']
     do_train = True
     metrics = False
-    feat_importance = False
+    feat_importance = True
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Number of features', NODE_FEATURES_NUM)
 
     models = MyModels(word_to_ixs, ignore_columns=[])
-    if model_name == 'all':
-        for model_name in models.my_models:
-            train_load_model(models, model_name, do_train, train_d, val_d, device, metrics, feat_importance)
-    else:
+    if model_names == 'all':
+        model_names = list(models.my_models)
+    elif not isinstance(model_names, list):
+        model_names = [model_names]
+
+    for model_name in model_names:
         train_load_model(models, model_name, do_train, train_d, val_d, device, metrics, feat_importance)
 
     if metrics:
