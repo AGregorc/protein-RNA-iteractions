@@ -1,5 +1,6 @@
 import typing
 
+import torch
 import torch.nn.functional as F
 from dgl.nn.pytorch import GATConv
 from torch import nn
@@ -21,7 +22,8 @@ class NetGATConv(nn.Module):
         self.hidden_gat_layers = []
         self.hidden_b_norms = []
         for out_hidden in hidden_gat_sizes:
-            self.hidden_gat_layers.append(GATConv(prev_hidden, out_hidden, num_heads=3))
+            num_heads = 2
+            self.hidden_gat_layers.append(GATConv(prev_hidden, out_hidden, num_heads=num_heads))
             self.hidden_b_norms.append(nn.BatchNorm1d(out_hidden))
             prev_hidden = out_hidden
         self.hidden_gat_layers = nn.ModuleList(self.hidden_gat_layers)
@@ -36,7 +38,14 @@ class NetGATConv(nn.Module):
         g, h = g_and_features
 
         for GATConvLayer, b_norm in zip(self.hidden_gat_layers, self.hidden_b_norms):
-            h = self.dropout(F.relu(b_norm(GATConvLayer(g, h))))
+            h = GATConvLayer(g, h)
+            h = torch.mean(h, dim=1)
+            h = b_norm(h)
+            h = F.relu(h)
+            h = self.dropout(h)
+
+        if len(h.shape) == 3:
+            h = torch.mean(h, dim=1)
         h = self.last_linear_layer(h)
 
         return g, h
