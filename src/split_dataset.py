@@ -59,6 +59,8 @@ def get_train_val_test_data(dataset, dataset_filenames, split_file=TRAIN_VAL_TES
     test_d = []
     test_f = []
     for data, filename in zip(dataset, dataset_filenames):
+        if not filename.endswith('.pdb'):
+            filename = filename + '.pdb'
         tr_val_or_test = file_to_ds[filename]
         tmp_d = train_d
         tmp_f = train_f

@@ -242,10 +242,19 @@ def feature_importance(net, graphs, model_name, n_graphs=3, n_steps=10, save=Fal
 
     x_list = list(range(Constants.NODE_FEATURES_NUM))
 
-    plt.figure()
-    plt.bar(x_list, ig_attr_test_norm_sum)
+    index_array = np.argsort(-np.absolute(ig_attr_test_norm_sum))
+    n = 25
+    names = np.array(Constants.FEATURE_NAMES)[index_array]
+    attrs = ig_attr_test_norm_sum[index_array]
+    for i in range(int(np.ceil(len(Constants.FEATURE_NAMES)/n))):
+        maxi = min((i+1)*n, len(Constants.FEATURE_NAMES))
 
-    if save:
-        plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, 'feature_importance.png'))
-    else:
-        plt.show()
+        plt.figure()
+        plt.barh(names[maxi:i*n:-1], attrs[maxi:i*n:-1])
+        plt.title('Feature importance')
+        plt.tight_layout()
+
+        if save:
+            plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, f'feature_importance_{i}.png'))
+        else:
+            plt.show()

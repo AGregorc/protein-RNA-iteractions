@@ -106,3 +106,34 @@ EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 0  # Ignoring edge features for now
 
 COORDINATES_GRAPH_NAME = 'coordinates'
+
+
+FEATURE_NAMES = [
+    'mass',
+    'occupancy',
+    'element',
+    'fullname',
+    'aa'
+]
+for feature_name in NODE_APPENDED_FEATURES:
+    FEATURE_NAMES.append(feature_name)
+
+for group_feature in NODE_GROUP_FEATURES:
+    FEATURE_NAMES.append(group_feature)
+
+# dssp features
+FEATURE_NAMES.append('dssp_aa')
+FEATURE_NAMES.append('dssp_S')
+FEATURE_NAMES.append('dssp_acc')
+FEATURE_NAMES.append('dssp_phi')
+FEATURE_NAMES.append('dssp_psi')
+FEATURE_NAMES.append('dssp_nh->o_1.1')
+FEATURE_NAMES.append('dssp_nh->o_1.2')
+FEATURE_NAMES.append('dssp_o->hn_1.1')
+FEATURE_NAMES.append('dssp_o->hn_1.2')
+FEATURE_NAMES.append('dssp_nh->o_2.1')
+FEATURE_NAMES.append('dssp_nh->o_2.2')
+FEATURE_NAMES.append('dssp_o->hn_2.1')
+FEATURE_NAMES.append('dssp_o->hn_2.2')
+
+assert len(FEATURE_NAMES) == NODE_FEATURES_NUM
