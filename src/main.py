@@ -1,18 +1,12 @@
 import torch
-from ignite.handlers import Checkpoint
-from sklearn.model_selection import train_test_split
 import torch.nn as nn
 
-from Constants import LABEL_POSITIVE_COLOR, LABEL_NEGATIVE_COLOR, NODE_FEATURES_NUM
+from Constants import NODE_FEATURES_NUM
 from Data.Data import get_dataset, save_dataset
 from Data.Evaluate import calculate_metrics, majority_model_metrics, dataset_info, feature_importance
+from Data.PlotMPL import plot_training_history
 from GNN.MyModels import MyModels
 from GNN.run_ignite import run
-from GNN.InitialDataLayer import InitialDataLayer
-from GNN.NetFirstGraphConvThenLinear import NetFirstGraphConvThenLinear
-from GNN.NetSequenceWrapper import NetSequenceWrapper
-from Data.PlotMPL import plot_from_file, plot_predicted, use_new_window, plot_training_history
-from Data.Preprocess import is_labeled_positive
 from split_dataset import get_train_val_test_data
 
 
@@ -39,7 +33,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
                                                          device=device,
                                                          criterion=criterion,
                                                          batch_size=10,
-                                                         epochs=1,
+                                                         epochs=10000,
                                                          model_name=model_name)
         print(f'Run for {model_name} is done\n\n')
 
@@ -59,11 +53,11 @@ def main():
     model_names = ['design_space_gat', 'two_branches_small', 'two_branches']
     do_train = True
     metrics = False
-    feat_importance = True
+    feat_importance = False
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Number of features', NODE_FEATURES_NUM)
+    print(f'Number of features {NODE_FEATURES_NUM}, device {device}')
 
     models = MyModels(word_to_ixs, ignore_columns=[])
     if model_names == 'all':
