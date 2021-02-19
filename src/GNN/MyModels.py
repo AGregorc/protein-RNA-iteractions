@@ -105,9 +105,12 @@ class MyModels:
     def get_thresholds(self, model_name):
         path = join(Constants.MODELS_PATH, model_name, self.threshold_filename)
         # return {}
-        with open(path, 'r') as f:
-            thresholds = json.load(f)
-        return thresholds
+        try:
+            with open(path, 'r') as f:
+                thresholds = json.load(f)
+            return thresholds
+        except FileNotFoundError:
+            return None
 
     def load_models(self, model_name, device):
         model = copy.deepcopy(self.my_models[model_name])

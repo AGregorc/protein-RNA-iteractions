@@ -10,7 +10,7 @@ from dgl.data import load_graphs
 from flask import Flask
 from flask_cors import CORS, cross_origin
 
-from Data.Evaluate import predict_percent, print_metrics, _get
+from Data.Evaluate import predict_percent, print_metrics, _get, smooth_graph
 from GNN.MyModels import MyModels
 
 # path = os.path.abspath(os.path.dirname(__file__))
@@ -36,8 +36,8 @@ dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_
 parser = PDBParser()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_name = 'first_linear_then_more_GraphConvs_then_linear'
-predict_type = 'y_combine_all_percent'
+model_name = 'two_branches'
+predict_type = 'y_combine_all_smooth_percent'
 
 my_models = MyModels(word_to_ixs)
 net, loss, thresholds = my_models.load_models(model_name, device)
@@ -82,6 +82,7 @@ def get_predictions(pdb_fn):
 
     atom_dict = {}
     predictions = predict_percent(net, [graph], predict_type=predict_type)
+    predictions = smooth_graph(graph, predictions)
     # print(predictions)
     atoms = get_atoms_list(protein_chains)
     for dgl_id, (atom, label) in enumerate(zip(atoms, graph.ndata[Constants.LABEL_NODE_NAME])):

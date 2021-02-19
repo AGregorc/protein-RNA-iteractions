@@ -3,6 +3,8 @@ import os
 import dgl
 import torch
 from captum.attr import IntegratedGradients
+from dgl import DGLGraph
+import dgl.function as fn
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, mean_squared_error, roc_curve, \
     auc
 import matplotlib.pyplot as plt
@@ -25,6 +27,35 @@ def predict(net, dataset):
     return result
 
 
+def smooth_graph(g: DGLGraph, node_data, p=0.3):
+    node_name = 'smooth'
+    result_name = 'result'
+    g.ndata[node_name] = node_data
+
+    def reducer(nodes):
+        min_val, _ = torch.min(nodes.mailbox['m'], dim=1)
+        # print(torch.min(nodes.mailbox['m'], dim=1))
+        return {
+            result_name:
+                (nodes.data[node_name] + min_val + nodes.mailbox['m'].sum(1)) / (nodes.mailbox['m'].shape[1] + 2)
+        }
+
+    g.update_all(fn.copy_u(node_name, 'm'), reducer)
+    return node_data * (1 - p) + g.ndata[result_name] * p
+
+
+def smooth_dataset(graphs, node_data, p=0.3):
+    result = torch.empty(node_data.shape)
+    curr_idx = 0
+
+    for g in graphs:
+        to_idx = curr_idx + g.number_of_nodes()
+        result[curr_idx:to_idx] = smooth_graph(g, node_data[curr_idx:to_idx], p)
+        curr_idx = to_idx
+
+    return result
+
+
 def predict_percent(model, dataset, predict_type=None):
     model.eval()
     output = predict(model, dataset)
@@ -44,6 +75,7 @@ def predict_percent(model, dataset, predict_type=None):
     y_combine_percent = (y_interaction_percent + y_reverse_interaction_percent) / 2
 
     y_combine_all_percent = (y_interaction_percent + y_reverse_interaction_percent + y_pick_major_percent) / 3
+    y_combine_all_smooth_percent = smooth_dataset(dataset, y_combine_all_percent)
 
     all_predictions = {
         'y_pred': y_pred,
@@ -52,6 +84,7 @@ def predict_percent(model, dataset, predict_type=None):
         'y_combine_percent': y_combine_percent,
         'y_pick_major_percent': y_pick_major_percent,
         'y_combine_all_percent': y_combine_all_percent,
+        'y_combine_all_smooth_percent': y_combine_all_smooth_percent,
     }
     if predict_type is None:
         return all_predictions
@@ -160,6 +193,7 @@ def _get_y_true(dataset):
     y_true = y_true.cpu()
     return y_true
 
+
 def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name='', appendix=''):
     plt.figure()
     lw = 2
@@ -228,7 +262,7 @@ def dataset_info(train, validation, test, do_print=True):
     return labels_p
 
 
-def feature_importance(net, graphs, model_name, n_graphs=3, n_steps=10, save=False):
+def feature_importance(net, graphs, model_name, n_graphs=50, n_steps=2, save=False):
     n_graphs = min(n_graphs, len(graphs))
     input_d = dgl.batch([graphs[i] for i in range(n_graphs)])
 
@@ -246,11 +280,11 @@ def feature_importance(net, graphs, model_name, n_graphs=3, n_steps=10, save=Fal
     n = 25
     names = np.array(Constants.FEATURE_NAMES)[index_array]
     attrs = ig_attr_test_norm_sum[index_array]
-    for i in range(int(np.ceil(len(Constants.FEATURE_NAMES)/n))):
-        maxi = min((i+1)*n, len(Constants.FEATURE_NAMES))
+    for i in range(int(np.ceil(len(Constants.FEATURE_NAMES) / n))):
+        maxi = min((i + 1) * n, len(Constants.FEATURE_NAMES))
 
         plt.figure()
-        plt.barh(names[maxi:i*n:-1], attrs[maxi:i*n:-1])
+        plt.barh(names[maxi:i * n:-1], attrs[maxi:i * n:-1])
         plt.title('Feature importance')
         plt.tight_layout()
 
