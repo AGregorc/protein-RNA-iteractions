@@ -98,3 +98,11 @@ def plot_training_history(training_history, validation_history, model_name='', s
     _training_history(training_history['loss'], 'Training Loss',
                       validation_history['loss'], 'Validation Loss',
                       'No. of Epochs', 'Loss', model_name, save)
+
+
+def visualize_model(net, model_name, sample_input):
+    from torchviz import make_model_viz
+    # logits = net(sample_input)
+    g = make_model_viz(net, initial_only=False)
+
+    filename = g.render(filename=os.path.join(Constants.TMP_PATH, model_name), format='pdf')

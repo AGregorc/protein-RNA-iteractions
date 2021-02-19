@@ -45,10 +45,12 @@ class NodeEmbeddingLayer(nn.Module):
         features = features[:, self.mask_ignored]
 
         result = features[:, self.numerical_cols]
+        concats = [result]
         for col, embedding in self.col_to_embedding.items():
             col = int(col)
             embeds = embedding(features[:, col].long())
             #             print('dtypes: ', embeds.dtype, result.dtype)
-            result = torch.cat((result, embeds), 1)
+            concats.append(embeds)
+        result = torch.cat(concats, 1)
 
         return self.dropout(F.relu(self.b_norm_out(self.linear(self.b_norm_in(result)))))

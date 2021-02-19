@@ -10,6 +10,7 @@ GRAPH_EXTENSION = '.bin'
 PDB_PATH = os.path.join(DATA_PATH, 'pdbs')
 DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
 MODELS_PATH = os.path.join(DATA_PATH, 'models')
+TMP_PATH = os.path.join(DATA_PATH, 'tmp')
 NUM_PROCESSES = 12
 
 if not os.path.exists(DATA_PATH):
@@ -24,6 +25,8 @@ if not os.path.exists(DSSP_PATH):
     os.makedirs(DSSP_PATH)
 if not os.path.exists(MODELS_PATH):
     os.makedirs(MODELS_PATH)
+if not os.path.exists(TMP_PATH):
+    os.makedirs(TMP_PATH)
 
 
 TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
