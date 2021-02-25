@@ -1,13 +1,15 @@
 import json
+import os
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GroupShuffleSplit
 
+import Constants
 from Constants import TRAIN_VAL_TEST_SPLIT_FILE_PATH
 from Data.Data import get_dataset
 from Data.Evaluate import dataset_info
 
 
-def randomized_stratified_group_split(dataset, dataset_filenames, distributions, max_diff=0.2, max_tries=100):
+def randomized_stratified_group_split(dataset, dataset_filenames, distributions, groups, max_diff=0.2, max_tries=100):
     assert sum(distributions) == 1
     assert len(distributions) == 3  # train, val, test
     val_te_size = distributions[1] + distributions[2]
@@ -18,10 +20,20 @@ def randomized_stratified_group_split(dataset, dataset_filenames, distributions,
     best_valf = None
     best_tef = None
     best_i = -1
+    gss = GroupShuffleSplit(n_splits=max_tries, test_size=val_te_size, random_state=77)
 
-    for i in range(max_tries):
-        train_d, test_val_d, train_f, test_val_f = train_test_split(dataset, dataset_filenames, shuffle=True,
-                                                                    test_size=val_te_size)
+    def get_subset(li, ids):
+        return [li[d] for d in ids]
+
+    # for i in range(max_tries):
+    for i, (train_idx, test_val_idx) in enumerate(gss.split(dataset, groups=groups)):
+        train_d = get_subset(dataset, train_idx)
+        train_f = get_subset(dataset_filenames, train_idx)
+        test_val_d = get_subset(dataset, test_val_idx)
+        test_val_f = get_subset(dataset_filenames, test_val_idx)
+
+        # train_d, test_val_d, train_f, test_val_f = train_test_split(dataset, dataset_filenames, shuffle=True,
+        #                                                             test_size=val_te_size)
         val_d, test_d, val_f, test_f = train_test_split(test_val_d, test_val_f, shuffle=True, test_size=test_size)
 
         labels_p = dataset_info(train_d, val_d, test_d, do_print=False)
@@ -76,9 +88,11 @@ def get_train_val_test_data(dataset, dataset_filenames, split_file=TRAIN_VAL_TES
     return train_d, train_f, val_d, val_f, test_d, test_f
 
 
-def split_and_save(data_limit):
+def split_and_save(data_limit, pdb_to_group):
     dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=data_limit)
-    train_f, val_f, test_f = randomized_stratified_group_split(dataset, dataset_filenames, [0.6, 0.2, 0.2])
+    groups = [pdb_to_group[pdb] for pdb in dataset_filenames]
+    print(groups)
+    train_f, val_f, test_f = randomized_stratified_group_split(dataset, dataset_filenames, [0.6, 0.2, 0.2], groups)
     split_dict = {
         'train': train_f,
         'validation': val_f,
@@ -92,5 +106,16 @@ def split_and_save(data_limit):
 
 
 if __name__ == '__main__':
-    data_limit = 1424
-    split_and_save(data_limit)
+
+    pdb_to_group_dict = {}
+    with open(os.path.join(Constants.DATA_PATH, 'seq_to_pdbs.json'), 'r') as fp:
+        seq_to_pdbs = json.load(fp)
+        for idx, (seq, pdbs) in enumerate(seq_to_pdbs.items()):
+            for pdb in pdbs:
+                pdb_to_group_dict[pdb] = idx
+    print(pdb_to_group_dict)
+
+    limit = 500
+    split_and_save(limit, pdb_to_group_dict)
+
+
