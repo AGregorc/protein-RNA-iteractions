@@ -10,14 +10,13 @@ from dgl.data import load_graphs
 from flask import Flask
 from flask_cors import CORS, cross_origin
 
-from Data.Evaluate import predict_percent, print_metrics, _get, smooth_graph
-from GNN.MyModels import MyModels
 
-# path = os.path.abspath(os.path.dirname(__file__))
-# sys.path.append(os.path.join(path, '..', '..'))
+path = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(os.path.join(path, '..', '..'))
 
 import Constants
-from Data.Data import get_dataset, my_pdb_parser
+from Data.Evaluate import predict_percent, print_metrics, _get, smooth_graph
+from GNN.MyModels import MyModels
 from Data.Preprocess import is_labeled_positive, is_protein, get_dgl_id, load_feat_word_to_ixs, get_protein_chains, \
     get_atoms_list
 
@@ -36,7 +35,7 @@ dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_
 parser = PDBParser()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_name = 'two_branches'
+model_name = 'first_linear_then_more_GraphConvs_then_linear'
 predict_type = 'y_combine_all_smooth_percent'
 
 my_models = MyModels(word_to_ixs)
