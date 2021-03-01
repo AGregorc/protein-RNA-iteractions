@@ -11,7 +11,7 @@ from split_dataset import get_train_val_test_data
 
 
 def data(limit=1424, save=False):
-    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit, individual=True)
+    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit, individual=False)
 
     if save:
         save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
@@ -40,7 +40,7 @@ def tune_hyperparameter(my_models, model_name, train_d, val_d, device, weights=N
                                                          epochs=1000,
                                                          model_name=model_name,
                                                          model_name_prefix='w_'+str(weight))
-        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
+        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, do_plot=False, save=False)
         curr_auc = auc['y_combine_all_smooth_percent']
         # my_models.save_thresholds(model_name, thresholds)
         if curr_auc >= best_auc:
