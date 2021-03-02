@@ -1,3 +1,5 @@
+import copy
+
 import torch
 import torch.nn as nn
 
@@ -26,12 +28,14 @@ def data(limit=1424, save=False):
 def tune_hyperparameter(my_models, model_name, train_d, val_d, device, weights=None):
     if weights is None:
         weights = [1.0, 2.0, 3.0, 5.0, 6.0, 7.54, 9.0]
-    net = my_models.my_models[model_name]
-    print(net, model_name)
+    net_original = my_models.my_models[model_name]
+    print(net_original, model_name)
     best_auc = 0
     best_hyperparam = None
 
     for weight in weights:
+        print(f'Training with weight: {weight}')
+        net = copy.deepcopy(net_original)
         criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, weight], device=device))
         training_h, validation_h, whole_training_h = run(net, train_d, val_d,
                                                          device=device,
