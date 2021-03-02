@@ -9,7 +9,7 @@ from Data.Data import get_dataset
 from Data.Evaluate import dataset_info
 
 
-def randomized_stratified_group_split(dataset, dataset_filenames, distributions, groups, max_diff=0.2, max_tries=100):
+def randomized_stratified_group_split(dataset, dataset_filenames, distributions, groups, max_diff=0.2, max_tries=200):
     assert sum(distributions) == 1
     assert len(distributions) == 3  # train, val, test
     val_te_size = distributions[1] + distributions[2]
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 pdb_to_group_dict[pdb] = idx
     print(pdb_to_group_dict)
 
-    limit = 500
+    limit = 1424
     split_and_save(limit, pdb_to_group_dict)
 
 
