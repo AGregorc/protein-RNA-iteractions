@@ -2,7 +2,7 @@ import os
 
 import dgl
 import torch
-from captum.attr import IntegratedGradients
+from captum.attr import IntegratedGradients, DeepLift
 from dgl import DGLGraph
 import dgl.function as fn
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, mean_squared_error, roc_curve, \
@@ -266,20 +266,26 @@ def feature_importance(net, graphs, model_name, n_graphs=50, n_steps=2, save=Fal
     n_graphs = min(n_graphs, len(graphs))
     input_d = dgl.batch([graphs[i] for i in range(n_graphs)])
 
-    ig = IntegratedGradients(net)
-    ig_attr_test = ig.attribute(input_d.ndata[Constants.NODE_FEATURES_NAME],
-                                additional_forward_args=(dgl.batch([input_d] * n_steps)),
-                                target=1, n_steps=n_steps)
+    # ig = IntegratedGradients(net)
+    # ig_attr_test = ig.attribute(input_d.ndata[Constants.NODE_FEATURES_NAME],
+    #                             additional_forward_args=(dgl.batch([input_d] * n_steps)),
+    #                             target=1, n_steps=n_steps)
+    #
+    # ig_attr_test_sum = ig_attr_test.detach().numpy().sum(0)
+    # ig_attr_test_norm_sum = ig_attr_test_sum / np.linalg.norm(ig_attr_test_sum, ord=1)
 
-    ig_attr_test_sum = ig_attr_test.detach().numpy().sum(0)
-    ig_attr_test_norm_sum = ig_attr_test_sum / np.linalg.norm(ig_attr_test_sum, ord=1)
+    dl = DeepLift(net)
+    dl_attr_test = dl.attribute(input_d.ndata[Constants.NODE_FEATURES_NAME],
+                                additional_forward_args=(dgl.batch([input_d] * 2)),
+                                target=1)
 
-    x_list = list(range(Constants.NODE_FEATURES_NUM))
+    dl_attr_test_sum = dl_attr_test.detach().numpy().sum(0)
+    dl_attr_test_norm_sum = dl_attr_test_sum / np.linalg.norm(dl_attr_test_sum, ord=1)
 
-    index_array = np.argsort(-np.absolute(ig_attr_test_norm_sum))
+    index_array = np.argsort(-np.absolute(dl_attr_test_norm_sum))
     n = 25
     names = np.array(Constants.FEATURE_NAMES)[index_array]
-    attrs = ig_attr_test_norm_sum[index_array]
+    attrs = dl_attr_test_norm_sum[index_array]
     for i in range(int(np.ceil(len(Constants.FEATURE_NAMES) / n))):
         maxi = min((i + 1) * n, len(Constants.FEATURE_NAMES))
 
@@ -289,6 +295,6 @@ def feature_importance(net, graphs, model_name, n_graphs=50, n_steps=2, save=Fal
         plt.tight_layout()
 
         if save:
-            plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, f'feature_importance_{i}.png'))
+            plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, f'feature_importance_DL_{i}.png'))
         else:
             plt.show()
