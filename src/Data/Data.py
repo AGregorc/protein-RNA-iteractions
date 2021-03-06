@@ -47,12 +47,17 @@ def call_gc():
 
 
 def create_graph_process(args):
-    my_filename, directory_path, word_to_ixs, lock = args
+    my_filename, directory_path, word_to_ixs, lock, save = args
     start_time = time.time()
     try:
         # print(f'[{os.getpid()}] got something to work :O')
         graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
         print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
+
+        if save:
+            fn = os.path.splitext(my_filename)[0]
+            pf = os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION)
+            save_graphs(pf, [graph])
     except Exception as e:
         print(f'[{os.getpid()}] Error from file {my_filename} {(time.time() - start_time):.1f}s; {e}')
         call_gc()
@@ -78,7 +83,7 @@ def standardize_graph_process(result):
     return filename, graph
 
 
-def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
+def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individual=False):
     directory = os.fsencode(directory_path)
     manager = Manager()
 
@@ -90,8 +95,14 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
         filename = os.fsdecode(file)
         if filename.endswith(".pdb"):
             # dataset_dict[filename] = idx
-            dataset_filenames.append(filename)
-            idx += 1
+            if save_individual:
+                fn = os.path.splitext(filename)[0]
+                if not os.path.isfile(os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION)):
+                    dataset_filenames.append(filename)
+                    idx += 1
+            else:
+                dataset_filenames.append(filename)
+                idx += 1
         if limit is not None and idx >= limit:
             break
 
@@ -102,55 +113,59 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None):
     print(f'Starting to create {len(dataset_filenames)} graphs with multiprocessing')
     with Pool(processes=Constants.NUM_PROCESSES) as pool:
         result = pool.map(create_graph_process,
-                          map(lambda df: (df, directory_path, word_to_ixs, lock), dataset_filenames))
+                          map(lambda df: (df, directory_path, word_to_ixs, lock, save_individual), dataset_filenames))
     call_gc()
 
     intermediate_time = time.time()
     print(f'Create graphs finished in {intermediate_time - start_time:.1f}s')
 
-    numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
-    num_for_standardization = min(100, len(result))
-    means = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
-    variances = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
-    count_errors = 0
-    for i in range(num_for_standardization):
-        num = i - count_errors
-        if result[i][1] is None:
-            count_errors += 1
-            continue
-        numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
-        m = torch.mean(numerical_features, dim=0)
-        v = torch.var(numerical_features, dim=0)
-        means[num] = m
-        variances[num] = v
-    if count_errors > 0:
-        means = means[:-count_errors]
-        variances = variances[:-count_errors]
-    mean = torch.mean(means, dim=0, dtype=torch.float32)
-    std = torch.sqrt(torch.mean(variances, dim=0, dtype=torch.float32))
-
-    print(f'Starting to standardize graphs with multiprocessing in {time.time() - intermediate_time:.1f}s')
-    intermediate_time = time.time()
-    with Pool(processes=Constants.NUM_PROCESSES) as pool:
-        result = pool.map(standardize_graph_process,
-                          map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
-    call_gc()
-    print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
-    dataset = []
-    dataset_filenames = []
-    for filename, graph in result:
-        if graph is None:
-            print(f'{filename} is None')
-            continue
-        dataset.append(graph)
-        dataset_filenames.append(filename)
-
-    print(f'Dataset created in {(time.time() - start_time):.1f}s')
-
+    # numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
+    # num_for_standardization = min(100, len(result))
+    # means = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
+    # variances = torch.empty((num_for_standardization, len(numerical_cols)), dtype=torch.float64)
+    # count_errors = 0
+    # for i in range(num_for_standardization):
+    #     num = i - count_errors
+    #     if result[i][1] is None:
+    #         count_errors += 1
+    #         continue
+    #     numerical_features = result[i][1].ndata[Constants.NODE_FEATURES_NAME][:, numerical_cols]
+    #     m = torch.mean(numerical_features, dim=0)
+    #     v = torch.var(numerical_features, dim=0)
+    #     means[num] = m
+    #     variances[num] = v
+    # if count_errors > 0:
+    #     means = means[:-count_errors]
+    #     variances = variances[:-count_errors]
+    # mean = torch.mean(means, dim=0, dtype=torch.float32)
+    # std = torch.sqrt(torch.mean(variances, dim=0, dtype=torch.float32))
+    #
+    # print(f'Starting to standardize graphs with multiprocessing in {time.time() - intermediate_time:.1f}s')
+    # intermediate_time = time.time()
+    # with Pool(processes=Constants.NUM_PROCESSES) as pool:
+    #     result = pool.map(standardize_graph_process,
+    #                       map(lambda f_and_g: (f_and_g[0], f_and_g[1], mean, std, numerical_cols), result))
+    # call_gc()
+    # print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
     # Wait for all processes.
     pool.close()
     pool.join()
-    return dataset, dataset_filenames, word_to_ixs, (mean, std)
+
+    if save_individual:
+        return
+    else:
+        dataset = []
+        dataset_filenames = []
+        for filename, graph in result:
+            if graph is None:
+                print(f'{filename} is None')
+                continue
+            dataset.append(graph)
+            dataset_filenames.append(filename)
+
+        print(f'Dataset created in {(time.time() - start_time):.1f}s')
+
+        return dataset, dataset_filenames, word_to_ixs, (None, None)
 
 
 def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None, individual=False):
