@@ -152,6 +152,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
     pool.join()
 
     if save_individual:
+        save_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix'), word_to_ixs)
         return
     else:
         dataset = []

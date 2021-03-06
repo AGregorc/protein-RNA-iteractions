@@ -254,6 +254,7 @@ def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=
                 next_res_name = next_res.resname
 
             start = time.time()
+            is_key = True
             key = res.full_id[2:]
             if key not in dssp[0]:
                 key = (key[0], (' ', key[1][1], ' '))
@@ -264,8 +265,12 @@ def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=
                             break
 
                     if key not in dssp[0]:
-                        raise Exception(f'DSSP key not found for {key}, model {res.full_id[0]}')
-            dssp_features = dssp[0][key]
+                        is_key = False
+                        # raise Exception(f'DSSP key not found for {key}, model {res.full_id[0]}')
+            if is_key:
+                dssp_features = dssp[0][key]
+            else:
+                dssp_features = ('', '-', 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
             dssp_key_t += time.time() - start
 
             start = time.time()
@@ -488,7 +493,6 @@ def change_direction_features(np_array):
 
 # node_feat_word_to_ixs = {}
 
-
 def save_feat_word_to_ixs(filename, node_feat_word_to_ixs):
     with open(filename + '.json', 'w') as fp:
         json.dump(node_feat_word_to_ixs.copy(), fp)
@@ -528,7 +532,8 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
                 dict_copy.append(col)  # add column to a copy list too
                 if lock:
                     lock.acquire()
-                node_feat_word_to_ixs[col] = {}  # init word to ix for each column with strings
+                node_feat_word_to_ixs[col] = {'': 0}  # init word to ix for each column with strings
+                # value '' is default value
                 if lock:
                     lock.release()
         else:

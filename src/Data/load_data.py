@@ -196,7 +196,7 @@ def update_pdbs_list_and_load(query=ALL_PROTEINS_QUERY):
         if len(result) < QUERY_ROWS:
             break
 
-    load_from_list(new_pdbs[:10])
+    load_from_list(new_pdbs)
     print(len(new_pdbs), len(pdbs))
 
     with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst'), 'w') as f:
