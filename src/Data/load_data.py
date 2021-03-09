@@ -174,7 +174,7 @@ def load_data(start_pdb=0, limit=None):
     load_from_list(all_pdbs)
 
 
-def update_pdbs_list_and_load(query=ALL_PROTEINS_QUERY):
+def update_pdbs_list_and_load(query):
     pdbs = []
     with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst')) as f:
         for pdb in f:
@@ -182,33 +182,41 @@ def update_pdbs_list_and_load(query=ALL_PROTEINS_QUERY):
 
     new_pdbs = []
     start_row = 0
-    while True:
-        print(f'Loading pdb ids from start row {start_row}')
-        url_result = query.format(start_row)
-        r = requests.get(url_result)
-        r.raise_for_status()
-        result = json.loads(r.text)['result_set']
-        for elem in result:
-            curr_pdb = elem['identifier'].lower()
-            if curr_pdb not in pdbs:
-                new_pdbs.append(curr_pdb)
-        start_row += QUERY_ROWS
-        if len(result) < QUERY_ROWS:
-            break
 
-    load_from_list(new_pdbs)
-    print(len(new_pdbs), len(pdbs))
+    try:
+        while True:
+            print(f'Loading pdb ids from start row {start_row}')
+            url_result = query.format(start_row)
+            r = requests.get(url_result)
+            r.raise_for_status()
+            result = json.loads(r.text)['result_set']
+            for elem in result:
+                curr_pdb = elem['identifier'].lower()
+                if curr_pdb not in pdbs:
+                    new_pdbs.append(curr_pdb)
+            start_row += QUERY_ROWS
+            if len(result) < QUERY_ROWS:
+                break
 
-    with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst'), 'w') as f:
-        first = True
-        for pdb in pdbs:
-            if first:
-                f.write(pdb)
-                first = False
-                continue
-            f.write('\n' + pdb)
-        for pdb in new_pdbs:
-            f.write('\n' + pdb)
+        load_from_list(new_pdbs)
+    except:
+        return False
+    else:
+        # If loading is successful then update pdb list file
+        print(len(new_pdbs), len(pdbs))
+
+        with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst'), 'w') as f:
+            first = True
+            for pdb in pdbs:
+                if first:
+                    f.write(pdb)
+                    first = False
+                    continue
+                f.write('\n' + pdb)
+            for pdb in new_pdbs:
+                f.write('\n' + pdb)
+
+    return True
 
 #
 # if __name__ == '__main__':

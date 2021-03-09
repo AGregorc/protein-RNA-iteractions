@@ -7,8 +7,8 @@ limit = None
 if __name__ == '__main__':
     # Update dataset
     start = time.time()
-    update_pdbs_list_and_load(query=ALL_PROTEINS_QUERY)
-    print(f'Loading pdb and dssp done {time.time() - start}')
+    success = update_pdbs_list_and_load(query=ALL_PROTEINS_QUERY)
+    print(f'Loading pdb and dssp done {time.time() - start}, was successful: {success}')
 
     # Preprocess
     start = time.time()
