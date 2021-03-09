@@ -64,8 +64,13 @@ def get_predictions(pdb_fn):
 
     start = time.time()
     print(f'Get predictions for {pdb_fn}')
-    graph = load_graphs(os.path.join(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION))
-    graph = graph[0][0]
+    try:
+        graph = load_graphs(os.path.join(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION))
+        graph = graph[0][0]
+    except:
+        return {
+            'success': False,
+        }
 
     t = time.time()
     print(f'Preprocessed in {t - start}')
@@ -92,7 +97,7 @@ def get_predictions(pdb_fn):
         # print(int(serial_number.item()))
         atom_dict[int(atom.serial_number)] = float(predictions[dgl_id])
         # atom_dict[int(serial_number.item())] = float(label.item())
-    print(_get(graph.ndata[Constants.LABEL_NODE_NAME], predictions > 0.30535218, predictions))
+    # print(_get(graph.ndata[Constants.LABEL_NODE_NAME], predictions > 0.30535218, predictions))
     print(f'Predict atoms in  {time.time() - t}')
     t = time.time()
 
@@ -101,4 +106,5 @@ def get_predictions(pdb_fn):
         'predictions': atom_dict,
         'optimal_threshold': threshold,
         'file': pdb_file,
+        'success': True,
     }

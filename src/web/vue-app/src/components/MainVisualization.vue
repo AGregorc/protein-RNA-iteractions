@@ -8,9 +8,9 @@
       <p> Insert PDB ID </p>
       <label>
         <input list="pdb_list" type="text" v-model="pdb_text">
-        <datalist id="pdb_list">
-          <option v-for="pdb in all_pdbs" :value="pdb" :key="pdb"/>
-        </datalist>
+<!--        <datalist id="pdb_list">-->
+<!--          <option v-for="pdb in all_pdbs" :value="pdb" :key="pdb"/>-->
+<!--        </datalist>-->
 
       </label>
       <button @click="load"> Load </button>
@@ -24,8 +24,8 @@
         </select>
         <br>
 
-        <input id="hide-rna" type="checkbox" v-model="rna_hide">
-        <label for="hide-rna">Hide RNA</label>
+        <input id="show-only-proteins" type="checkbox" v-model="show_only_aas">
+        <label for="show-only-proteins">Show only proteins</label>
         <br>
         <button @click="recenter">Recenter</button>
         <br>
@@ -67,7 +67,7 @@ export default {
         'cartoon',
       ],
       protein_style_selected: 'sphere',
-      rna_hide: false,
+      show_only_aas: false,
       toggle_res_labels: false,
       optimal_threshold: 0.5,
       curr_threshold: undefined,
@@ -78,8 +78,8 @@ export default {
     protein_style_selected: function() {
       this.changeProteinStyle();
     },
-    rna_hide: function() {
-      viewer.setStyle({}, {cartoon: {hidden: this.rna_hide, colorscheme: 'Jmol'}});  /* default style */
+    show_only_aas: function() {
+      viewer.setStyle({}, {cartoon: {hidden: this.show_only_aas, colorscheme: 'Jmol'}});  /* default style */
       this.changeProteinStyle();
     },
     toggle_res_labels: function () {
@@ -94,22 +94,25 @@ export default {
     let element = document.getElementById('container-01');
     let config = { backgroundColor: 'gray' };
     viewer = window.$3Dmol.createViewer( element, config );
-    API.axios.get(API.ListAllPdbsURL)
-      .then(response => {
-        // console.log(response.data.all_pdbs);
-        this.all_pdbs = response.data.all_pdbs;
-      })
+    // API.axios.get(API.ListAllPdbsURL)
+    //   .then(response => {
+    //     // console.log(response.data.all_pdbs);
+    //     this.all_pdbs = response.data.all_pdbs;
+    //   })
   },
   methods: {
     load() {
-      if (!this.all_pdbs.includes(this.pdb_text) && !this.all_pdbs.includes(this.pdb_text+'.pdb')) {
-        alert('Sorry but we do not recognize this pdb ' + this.pdb_text);
-        return;
-      }
+      // if (!this.all_pdbs.includes(this.pdb_text) && !this.all_pdbs.includes(this.pdb_text+'.pdb')) {
+      //   alert('Sorry but we do not recognize this pdb ' + this.pdb_text);
+      //   return;
+      // }
       API.axios
         .get(API.GetPredictionsURL + this.pdb_text)
         .then(response => {
           // console.log(response.data)
+          if (!response.data.success) {
+            alert('PDB ID ' + this.pdb_text + ' does not exist in our database.')
+          }
           this.predictions = response.data.predictions;
           this.protein_chains = response.data.protein_chains;
           this.optimal_threshold = response.data.optimal_threshold;
@@ -123,7 +126,7 @@ export default {
           let v = viewer;
           v.removeAllModels();
           v.addModel( file, "pdb" );                       /* load data */
-          v.setStyle({}, {cartoon: {hidden: this.rna_hide, colorscheme: 'Jmol'}});  /* default style */
+          v.setStyle({}, {cartoon: {hidden: !this.show_only_aas, colorscheme: 'Jmol'}});  /* default style */
           this.changeProteinStyle();
           v.zoomTo();                                      /* set camera */
           v.render();                                      /* render scene */
