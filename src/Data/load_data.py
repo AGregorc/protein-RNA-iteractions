@@ -73,8 +73,7 @@ def pdb_to_dssp(pdb_file_path, rest_url):
     # request is successful, the id of the job running on the server is
     # returned.
     url_create = '{}api/create/pdb_file/dssp/'.format(rest_url)
-    r = requests.post(url_create, files=files)
-    r.raise_for_status()
+    r = requests.post(url_create, files=files, timeout=20)
 
     job_id = json.loads(r.text)['id']
     # print("Job submitted successfully. Id is: '{}'".format(job_id))
@@ -110,7 +109,7 @@ def pdb_to_dssp(pdb_file_path, rest_url):
             return False
         else:
             time.sleep(1)
-    else:
+    if ready:
         # Requests the result of the job. If an error occurs an exception is
         # raised and the program exits. If the request is successful, the result
         # is returned.
