@@ -22,7 +22,7 @@ if platform == "linux" or platform == "linux2":
     resource.setrlimit(resource.RLIMIT_NOFILE, (8192, rlimit[1]))
 
 
-def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None):
+def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None, save=False):
     if word_to_ixs is None:
         word_to_ixs = {}
     parser = PDBParser()
@@ -32,7 +32,7 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
     model = structure[0]
     # print(structure)
     # chains = list(model.get_chains())
-    graph, atoms, pairs, labels = create_graph_sample(model, word_to_ixs, lock)
+    graph, atoms, pairs, labels = create_graph_sample(model, word_to_ixs, lock, save)
     if standardize:
         numerical_cols = [i for i in range(Constants.NODE_FEATURES_NUM) if i not in word_to_ixs.keys()]
         filename, graph = standardize_graph_process((filename, graph, standardize[0], standardize[1], numerical_cols))
@@ -51,7 +51,7 @@ def create_graph_process(args):
     start_time = time.time()
     try:
         # print(f'[{os.getpid()}] got something to work :O')
-        graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock)
+        graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock, save)
         print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
 
         if save:
@@ -152,7 +152,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
     pool.join()
 
     if save_individual:
-        save_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix'), word_to_ixs)
+        save_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH, word_to_ixs)
         return
     else:
         dataset = []
@@ -228,8 +228,11 @@ def load_dataset(filename=None, limit=None, individual=False):
         mean = torch.load(f)
         std = torch.load(f)
 
-    filename_wti = fn_no_extension + '_word_to_ix'
-    word_to_ixs = load_feat_word_to_ixs(filename_wti)
+    if individual:
+        word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
+    else:
+        filename_wti = fn_no_extension + '_word_to_ix'
+        word_to_ixs = load_feat_word_to_ixs(filename_wti)
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 

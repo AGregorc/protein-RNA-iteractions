@@ -11,6 +11,7 @@ PDB_PATH = os.path.join(DATA_PATH, 'pdbs')
 DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
 MODELS_PATH = os.path.join(DATA_PATH, 'models')
 TMP_PATH = os.path.join(DATA_PATH, 'tmp')
+GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
 NUM_PROCESSES = 12
 
 if not os.path.exists(DATA_PATH):

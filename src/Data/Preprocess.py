@@ -12,7 +12,7 @@ import Constants
 from Data.groups import a2gs
 
 
-def create_graph_sample(model_structure, word_to_ixs, lock):
+def create_graph_sample(model_structure, word_to_ixs, lock, save=False):
     # start = time.time()
     protein_chains = label_protein_rna_interactions(model_structure)
     # end = time.time()
@@ -62,7 +62,7 @@ def create_graph_sample(model_structure, word_to_ixs, lock):
     #     plot_graph(pairs=pairs, atoms=protein_atoms, atom_color_func=get_labeled_color)
 
     G = create_dgl_graph(pairs, word_to_ixs, lock, len(protein_atoms), set_edge_features=False,
-                         node_features=atom_features, labels=labels, coordinates=positions)
+                         node_features=atom_features, labels=labels, coordinates=positions, save=save)
     assert G.number_of_nodes() == len(protein_atoms)
 
     # end = time.time()
@@ -509,19 +509,20 @@ def load_feat_word_to_ixs(filename):
 #     return node_feat_word_to_ixs
 
 
-def transform_node_features(features_list, node_feat_word_to_ixs, lock):
+def transform_node_features(features_list, node_feat_word_to_ixs, lock, save=False):
     """
         As we know from node_features function, node features contain also string elements.
         Here we transform string features to (one-hot) indexes that are suitable for Embedding layers.
 
+    :param features_list: list of all node features of a graph
     :param node_feat_word_to_ixs:
     :param lock:
-    :param features_list: list of all node features of a graph
+    :param save:
     :return: torch tensor transformed features
     """
     result = np.zeros((len(features_list), len(features_list[0])))
     start_f = time.time()
-
+    change = False
     # lock.acquire()
     dict_copy = [*node_feat_word_to_ixs.keys()]
     # lock.release()
@@ -536,6 +537,7 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
                 # value '' is default value
                 if lock:
                     lock.release()
+                change = True
         else:
             result[:, col] = [feat[col] for feat in features_list]
 
@@ -562,6 +564,7 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
                     lock.release()
 
                 col_word_to_ixs = node_feat_word_to_ixs[col]
+                change = True
 
             # new_dict_t += time.time() - start
             # start = time.time()
@@ -569,13 +572,20 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock):
 
             # assert_result_t += time.time() - start
 
+    if save and change:
+        if lock:
+            lock.acquire()
+        save_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH, node_feat_word_to_ixs)
+        if lock:
+            lock.release()
+
     # end = time.time()
     # print(f'fill string features: {end - start_f:.2f}, new_dict_t: {new_dict_t:.2f}, assert_result_t: {assert_result_t:.2f}')
     return torch.from_numpy(result).to(dtype=torch.float32)
 
 
 def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_features=False, node_features=None,
-                     labels=None, coordinates=None):
+                     labels=None, coordinates=None, save=False):
     """
         Our main preprocess function.
 
@@ -615,7 +625,7 @@ def create_dgl_graph(pairs, node_feat_word_to_ixs, lock, num_nodes, set_edge_fea
         G.edata[Constants.EDGE_FEATURE_NAME] = torch.from_numpy(edge_features).to(dtype=torch.float32)
 
     if node_features:
-        G.ndata[Constants.NODE_FEATURES_NAME] = transform_node_features(node_features, node_feat_word_to_ixs, lock)
+        G.ndata[Constants.NODE_FEATURES_NAME] = transform_node_features(node_features, node_feat_word_to_ixs, lock, save)
 
     if coordinates is not None:
         G.ndata[Constants.COORDINATES_GRAPH_NAME] = coordinates
