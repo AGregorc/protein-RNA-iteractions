@@ -45,6 +45,12 @@ class MyModels:
                     NetFirstGraphConvThenLinear(hidden_conv_sizes=[256, 128, 128],
                                                 hidden_linear_sizes=[128, 128, 64, 64, 32, 16])
                 ),
+            'first_linear_then_GraphConvs':  # sploh ne overfitta enega grafa
+                NetSequenceWrapper(
+                    InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
+                    NetFirstLinearThenGraphConv(hidden_conv_sizes=[64, 128, 128],
+                                                hidden_linear_sizes=[128, 128, 64, 64, 32, 16])
+                ),
             'first_linear_then_more_GraphConvs_then_linear':
                 NetSequenceWrapper(
                     InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
