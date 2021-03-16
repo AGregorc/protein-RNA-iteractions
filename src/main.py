@@ -25,25 +25,27 @@ def data(limit=1424, save=False):
     return train_d, train_f, val_d, val_f, word_to_ixs
 
 
-def tune_hyperparameter(my_models, model_name, train_d, val_d, device, weights=None):
+def tune_hyperparameter(word_to_ixs, model_name, train_d, val_d, device, weights=None):
     if weights is None:
         weights = [1.0, 2.0, 3.0, 5.0, 6.0, 7.54, 9.0]
-    net_original = my_models.my_models[model_name]
+
+    net_original = MyModels(word_to_ixs).my_models[model_name]
     print(net_original, model_name)
     best_auc = 0
     best_hyperparam = None
 
     for weight in weights:
         print(f'Training with weight: {weight}')
-        net = copy.deepcopy(net_original)
+        net = MyModels(word_to_ixs).my_models[model_name]
         criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, weight], device=device))
-        training_h, validation_h, whole_training_h = run(net, train_d, val_d,
-                                                         device=device,
-                                                         criterion=criterion,
-                                                         batch_size=10,
-                                                         epochs=1000,
-                                                         model_name=model_name,
-                                                         model_name_prefix='w_'+str(weight))
+        run(net, copy.deepcopy(train_d), copy.deepcopy(val_d),
+            device=device,
+            criterion=criterion,
+            batch_size=10,
+            epochs=500,
+            model_name=model_name,
+            model_name_prefix='w_' + str(weight))
+
         thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, do_plot=False, save=False)
         curr_auc = auc['y_combine_all_smooth_percent']
         # my_models.save_thresholds(model_name, thresholds)
@@ -72,7 +74,7 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
     else:
         net, loss, thresholds = my_models.load_models(model_name, device)
     if calc_metrics:
-        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, save=True)
+        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, do_plot=True, save=True)
         my_models.save_thresholds(model_name, thresholds)
     if calc_feat_i:
         feature_importance(net, val_d, model_name, save=True)
@@ -86,14 +88,14 @@ def main():
         VISUALIZE_MODELS = 2
         FEATURE_IMPORTANCE = 3
 
-    data_limit = 1424
+    data_limit = 10
     model_names = ['first_linear_then_more_GraphConvs_then_linear',
                    'design_space_inspired',
                    'design_space_gat',
                    'two_branches_small',
                    'two_branches']
     # model_names = 'all'
-    what_to_do = WhatUWannaDoNow.TUNE_HYPERPARAMS
+    what_to_do = WhatUWannaDoNow.FEATURE_IMPORTANCE
     metrics = False
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
@@ -110,7 +112,7 @@ def main():
         if what_to_do == WhatUWannaDoNow.TRAIN:
             train_load_model(models, model_name, True, train_d, val_d, device, metrics, False)
         if what_to_do == WhatUWannaDoNow.TUNE_HYPERPARAMS:
-            tune_hyperparameter(models, model_name, train_d, val_d, device)
+            tune_hyperparameter(word_to_ixs, model_name, train_d, val_d, device)
         if what_to_do == WhatUWannaDoNow.VISUALIZE_MODELS:
             visualize_model(models.my_models[model_name], model_name, val_d[0])
         if what_to_do == WhatUWannaDoNow.FEATURE_IMPORTANCE:
