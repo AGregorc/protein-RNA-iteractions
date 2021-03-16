@@ -87,7 +87,7 @@ class MyModels:
                     NetLinear(in_features=128 + 32, out_features=2, hidden_linear_sizes=[64, 64, 32, 16])
                 ),
 
-            'two_branches':  # sploh ne overfitta enega grafa
+            'two_branches':
                 NetSequenceWrapper(
                     ConcatNets([
                         nn.Sequential(
@@ -97,6 +97,21 @@ class MyModels:
                         nn.Sequential(
                             InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
                             NetGraphConv(out_features=32, hidden_conv_sizes=[64, 64, 128, 128])
+                        ),
+                    ]),
+                    NetLinear(in_features=128 + 32, out_features=2, hidden_linear_sizes=[128, 64, 32, 16])
+                ),
+
+            'two_branches_gat':
+                NetSequenceWrapper(
+                    ConcatNets([
+                        nn.Sequential(
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
+                            NetLinear(out_features=128, hidden_linear_sizes=[256, 128, 64, 64, 32]),
+                        ),
+                        nn.Sequential(
+                            InitialDataLayer(word_to_ixs=word_to_ixs, ignore_columns=ignore_columns),
+                            NetGATConv(out_features=32, hidden_gat_sizes=[64, 64, 128, 128])
                         ),
                     ]),
                     NetLinear(in_features=128 + 32, out_features=2, hidden_linear_sizes=[128, 64, 32, 16])
