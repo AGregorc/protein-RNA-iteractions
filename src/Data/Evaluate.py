@@ -132,7 +132,11 @@ def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, 
     for name, predictions in all_predictions.items():
         fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
         optimal_idx = np.argmax(tpr - fpr)
-        optimal_threshold = thresholds[optimal_idx]
+        optimal_threshold = float(thresholds[optimal_idx])
+        if optimal_threshold <= 0:
+            optimal_threshold = 0.01
+        if optimal_threshold >= 1:
+            optimal_threshold = 0.99
         area_under_curve = auc(fpr, tpr)
         all_thresholds[str(name)] = float(optimal_threshold)
         all_aucs[str(name)] = area_under_curve
