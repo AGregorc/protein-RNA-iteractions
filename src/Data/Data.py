@@ -43,7 +43,7 @@ def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None,
 
 def call_gc():
     garbage = gc.collect()
-    print(f'Garbage removed: {garbage}')
+    # print(f'Garbage removed: {garbage}')
 
 
 def create_graph_process(args):
@@ -51,7 +51,7 @@ def create_graph_process(args):
     start_time = time.time()
     try:
         # print(f'[{os.getpid()}] got something to work :O')
-        graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock, save)
+        graph, atoms, pairs, labels = my_pdb_parser(my_filename, directory_path, word_to_ixs, lock, save=save)
         print(f'[{os.getpid()}] File {my_filename} added in {(time.time() - start_time):.1f}s')
 
         if save:
@@ -83,7 +83,7 @@ def standardize_graph_process(result):
     return filename, graph
 
 
-def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individual=False):
+def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individual=True):
     directory = os.fsencode(directory_path)
     manager = Manager()
 
@@ -106,7 +106,11 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
         if limit is not None and idx >= limit:
             break
 
-    word_to_ixs = manager.dict()
+    if save_individual:
+        wti = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
+        word_to_ixs = manager.dict(wti)
+    else:
+        word_to_ixs = manager.dict()
     lock = manager.Lock()
 
     start_time = time.time()
@@ -149,7 +153,6 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
     # print(f'Filter unsuccessful graphs in {time.time() - intermediate_time:.1f}s')
     # Wait for all processes.
     pool.close()
-    pool.join()
 
     if save_individual:
         save_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH, word_to_ixs)
@@ -169,7 +172,7 @@ def create_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
         return dataset, dataset_filenames, word_to_ixs, (None, None)
 
 
-def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None, individual=False):
+def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=None, limit=None, individual=True):
     if filename is None:
         filename = file_name(limit=limit)
 
@@ -196,7 +199,7 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
     save_feat_word_to_ixs(filename_wti, word_to_ixs)
 
 
-def load_dataset(filename=None, limit=None, individual=False):
+def load_dataset(filename=None, limit=None, individual=True):
     if filename is None:
         filename = file_name(limit=limit)
 
@@ -236,7 +239,7 @@ def load_dataset(filename=None, limit=None, individual=False):
     return dataset, dataset_filenames, word_to_ixs, (mean, std)
 
 
-def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None, individual=False):
+def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=None, individual=True):
     if load_filename is None:
         load_filename = file_name(limit=limit)
     try:
@@ -245,7 +248,7 @@ def get_dataset(load_filename=None, directory_path=Constants.PDB_PATH, limit=Non
         print(f'Dataset loaded in {(time.time() - start_time):.1f}s')
     except Exception as e:
         print(f'Load from file {load_filename} didn\'t succeed, now creating new dataset {e}')
-        dataset, dataset_filenames, word_to_ixs, norm = create_dataset(directory_path, limit)
+        dataset, dataset_filenames, word_to_ixs, norm = update_dataset(directory_path, limit)
     return dataset, dataset_filenames, word_to_ixs, norm
 
 
