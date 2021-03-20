@@ -7,7 +7,7 @@ import warnings
 import torch
 from Bio.PDB import PDBParser
 from dgl.data import load_graphs
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS, cross_origin
 
 
@@ -29,6 +29,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 # dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
 # del dataset
 
+# word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
 word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
                                                  'graph_data_1424_all_atoms_word_to_ix'))
 dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_GRAPH_PATH)]
@@ -47,6 +48,13 @@ print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
+
+
+@app.route('/api/preprocessed_file/<pdb_id>')
+def send_preprocessed_pdb(pdb_id):
+    if '.' in pdb_id:
+        pdb_id = os.path.splitext(pdb_id)[0]
+    return send_from_directory(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION)
 
 
 @app.route('/api/list_all_pdbs')

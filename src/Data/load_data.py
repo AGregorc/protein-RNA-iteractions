@@ -151,6 +151,28 @@ def load_from_list(pdb_list):
             # print(f'{dssp_filename} added')
 
 
+def load_preprocessed_data(pdb_list):
+    url = Constants.DATA_API_URL + '/api/preprocessed_file/'
+    for pdb in tqdm(pdb_list):
+
+        # Load preprocessed file
+        pdb_filename = f'{pdb}{Constants.GRAPH_EXTENSION}'
+        path = os.path.join(Constants.SAVED_GRAPH_PATH, pdb_filename)
+        if not os.path.exists(path):
+            try:
+                r = requests.get(url + pdb_filename, timeout=8)
+                # r.raise_for_status()
+                if r.status_code < 300:
+                    with open(path, 'wb') as f:
+                        f.write(r.content)
+                else:
+                    print(f"Error when loading pdb file {pdb} status {r.status_code}")
+                    continue
+                # print(f'{pdb_filename} added')
+            except:
+                continue
+
+
 def load_data(start_pdb=0, limit=None):
     if not os.path.exists(PDB_DIR):
         os.makedirs(PDB_DIR)

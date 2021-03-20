@@ -553,18 +553,20 @@ def transform_node_features(features_list, node_feat_word_to_ixs, lock, save=Fal
             # with lock:
             # start = time.time()
             if word not in col_word_to_ixs:
+                if save:
+                    if lock:
+                        lock.acquire()
+                    d = col_word_to_ixs
+                    d[word] = len(col_word_to_ixs)
 
-                if lock:
-                    lock.acquire()
-                d = col_word_to_ixs
-                d[word] = len(col_word_to_ixs)
+                    node_feat_word_to_ixs[col] = d
+                    if lock:
+                        lock.release()
 
-                node_feat_word_to_ixs[col] = d
-                if lock:
-                    lock.release()
-
-                col_word_to_ixs = node_feat_word_to_ixs[col]
-                change = True
+                    col_word_to_ixs = node_feat_word_to_ixs[col]
+                    change = True
+                else:
+                    word = ''
 
             # new_dict_t += time.time() - start
             # start = time.time()

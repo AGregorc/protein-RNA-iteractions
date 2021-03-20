@@ -14,7 +14,7 @@ git clone https://github.com/AGregorc/protein-RNA-iteractions.git
 Now there is an option to use anaconda or pip to install all the requirements.
 The preferred one is using anaconda since it provides cudatoolkit.
 
-#### a) Using Anaconda
+#### Using Anaconda
  
 Check conda installation guides. 
 Here is just one example how to install miniconda on linux
@@ -34,17 +34,14 @@ Move to the protein-RNA-iteractions directory eg. `cd protein-RNA-iteractions` a
 conda install --file requirements.txt -c pytorch -c dglteam
 ```
 
-#### b) Using pip
-Not preferred installation but if you'll not use GPU it is still fine.
-You should probably also change some packages inside `requirements.txt` eg. `dgl-cu102` into `dgl`.
+# Runing processes
 
-Create new python environment `python3 -m venv torch` or `virtualenv torch` and install all requirements
+#### Flask server
 
-```
-source torch/bin/activate
-
-cd protein-RNA-iteractions/
-python3 -m pip install -r requirements.txt
+```shell script
+cd protein-RNA-iteractions
+export FLASK_APP=src/web/flask/api.py
+flask run --host=0.0.0.0 --port=7777
 ```
 
 

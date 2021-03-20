@@ -1,6 +1,8 @@
 import os
 from Data import groups
 
+DATA_API_URL = 'http://d12.biolab.si:7777/'
+
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 DATA_PATH = os.path.join(ROOT_PATH, '..', 'data')
 SAVED_GRAPHS_PATH = os.path.join(DATA_PATH, 'preprocessed_data')
