@@ -22,7 +22,8 @@ if platform == "linux" or platform == "linux2":
     resource.setrlimit(resource.RLIMIT_NOFILE, (8192, rlimit[1]))
 
 
-def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None, save=False):
+def my_pdb_parser(filename, directory_path=Constants.PDB_PATH, word_to_ixs=None, lock=None, standardize=None,
+                  save=False):
     if word_to_ixs is None:
         word_to_ixs = {}
     parser = PDBParser()
@@ -87,6 +88,13 @@ def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
     directory = os.fsencode(directory_path)
     manager = Manager()
 
+    pdb_error_list = []
+    with open(Constants.PDB_ERROR_LIST) as f:
+        for pdb in f:
+            pdb = pdb.strip()
+            if len(pdb) > 0:
+                pdb_error_list.append(pdb)
+
     idx = 0
     # dataset_dict = {}
     dataset_filenames = []
@@ -97,7 +105,8 @@ def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
             # dataset_dict[filename] = idx
             if save_individual:
                 fn = os.path.splitext(filename)[0]
-                if not os.path.isfile(os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION)):
+                if (not os.path.isfile(os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION))
+                        and filename not in pdb_error_list):
                     dataset_filenames.append(filename)
                     idx += 1
             else:
@@ -156,6 +165,15 @@ def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
 
     if save_individual:
         save_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH, word_to_ixs)
+        new_pdb_errors = []
+
+        for filename, graph in result:
+            if graph is None:
+                new_pdb_errors.append(filename)
+        print(f'Number of errors {len(new_pdb_errors)}')
+        with open(Constants.PDB_ERROR_LIST) as f:
+            for pdb in new_pdb_errors:
+                f.write('\n' + pdb)
         return
     else:
         dataset = []

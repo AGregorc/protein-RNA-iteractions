@@ -31,6 +31,7 @@ if not os.path.exists(TMP_PATH):
 
 
 TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
+PDB_ERROR_LIST = os.path.join(DATA_PATH, 'pdb_error_list.lst')
 
 
 def set_model_directory(model_name):
