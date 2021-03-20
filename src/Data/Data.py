@@ -171,9 +171,9 @@ def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individua
             if graph is None:
                 new_pdb_errors.append(filename)
         print(f'Number of errors {len(new_pdb_errors)}')
-        with open(Constants.PDB_ERROR_LIST) as f:
+        with open(Constants.PDB_ERROR_LIST, 'a') as f:
             for pdb in new_pdb_errors:
-                f.write('\n' + pdb)
+                f.write(pdb + '\n')
         return
     else:
         dataset = []
