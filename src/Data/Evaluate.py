@@ -107,7 +107,7 @@ def majority_model_metrics(dataset: list, do_plot=True, save=False):
     print_metrics(y_true, all_predictions, model_name, do_plot, save)
 
 
-def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True, save=False):
+def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True, save=False, thresholds=None):
     """
         Final metrics to compare different models
     :param dataset: list of graphs
@@ -121,24 +121,35 @@ def calculate_metrics(dataset: list, model, print_model_name: str, do_plot=True,
 
     y_true = _get_y_true(dataset)
     all_predictions = predict_percent(model, dataset, predict_type=None)
-    return print_metrics(y_true, all_predictions, print_model_name, do_plot, save)
+    return print_metrics(y_true, all_predictions, print_model_name, do_plot, save, threshold_dict=thresholds)
 
 
-def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, save=False):
+def print_metrics(y_true, all_predictions, print_model_name: str, do_plot=True, save=False, threshold_dict=None):
     string_out = []
-    all_thresholds = {}
+    if threshold_dict is None:
+        all_thresholds = {}
+    else:
+        all_thresholds = threshold_dict
     all_aucs = {}
 
     for name, predictions in all_predictions.items():
         fpr, tpr, thresholds = roc_curve(y_true, predictions, pos_label=1)
-        optimal_idx = np.argmax(tpr - fpr)
-        optimal_threshold = float(thresholds[optimal_idx])
-        if optimal_threshold <= 0:
-            optimal_threshold = 0.01
-        if optimal_threshold >= 1:
-            optimal_threshold = 0.99
+        if str(name) not in all_thresholds:
+            optimal_idx = np.argmax(tpr - fpr)
+            optimal_threshold = float(thresholds[optimal_idx])
+            if optimal_threshold <= 0:
+                optimal_threshold = 0.01
+            if optimal_threshold >= 1:
+                optimal_threshold = 0.99
+            all_thresholds[str(name)] = float(optimal_threshold)
+        else:
+            optimal_threshold = all_thresholds[str(name)]
+            optimal_idx = len(thresholds)
+            for idx, th in enumerate(thresholds):
+                if float(th) <= optimal_threshold:
+                    optimal_idx = idx
+                    break
         area_under_curve = auc(fpr, tpr)
-        all_thresholds[str(name)] = float(optimal_threshold)
         all_aucs[str(name)] = area_under_curve
 
         y_predicted = predictions > optimal_threshold

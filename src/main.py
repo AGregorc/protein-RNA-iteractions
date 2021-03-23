@@ -12,8 +12,8 @@ from GNN.run_ignite import run
 from split_dataset import get_train_val_test_data
 
 
-def data(limit=1424, save=False):
-    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit, individual=False)
+def data(limit=1424, save=False, test=False):
+    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit, individual=True)
 
     if save:
         save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
@@ -21,8 +21,11 @@ def data(limit=1424, save=False):
     train_d, train_f, val_d, val_f, test_d, test_f = get_train_val_test_data(dataset, dataset_filenames)
     dataset_info(train_d, val_d, test_d)
 
-    del dataset, dataset_filenames, test_d, test_f
-    return train_d, train_f, val_d, val_f, word_to_ixs
+    del dataset, dataset_filenames
+    if test:
+        return train_d, train_f, test_d, test_f, word_to_ixs
+    else:
+        return train_d, train_f, val_d, val_f, word_to_ixs
 
 
 def tune_hyperparameter(word_to_ixs, model_name, train_d, val_d, device, weights=None):
@@ -71,10 +74,11 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
         print(f'Run for {model_name} is done\n\n')
 
         plot_training_history(training_h, validation_h, model_name=model_name, save=True)
+        thresholds = None
     else:
         net, loss, thresholds = my_models.load_models(model_name, device)
     if calc_metrics:
-        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, do_plot=True, save=True)
+        thresholds, auc = calculate_metrics(val_d, net, print_model_name=model_name, do_plot=True, save=True, thresholds=thresholds)
         my_models.save_thresholds(model_name, thresholds)
     if calc_feat_i:
         feature_importance(net, val_d, model_name, save=True)
@@ -86,17 +90,16 @@ def main():
         TRAIN = 0
         TUNE_HYPERPARAMS = 1
         VISUALIZE_MODELS = 2
-        FEATURE_IMPORTANCE = 3
+        VISUALIZE_METRICS = 3
+        FEATURE_IMPORTANCE = 4
 
-    data_limit = 10
-    model_names = ['first_linear_then_more_GraphConvs_then_linear',
-                   'design_space_inspired',
-                   'design_space_gat',
+    data_limit = 1424
+    model_names = [
                    'two_branches_small',
                    'two_branches']
-    # model_names = 'all'
-    what_to_do = WhatUWannaDoNow.FEATURE_IMPORTANCE
-    metrics = False
+    # model_names = 'two_branches_small'
+    what_to_do = WhatUWannaDoNow.VISUALIZE_METRICS
+    metrics = True
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -111,6 +114,8 @@ def main():
     for model_name in model_names:
         if what_to_do == WhatUWannaDoNow.TRAIN:
             train_load_model(models, model_name, True, train_d, val_d, device, metrics, False)
+        if what_to_do == WhatUWannaDoNow.VISUALIZE_METRICS:
+            train_load_model(models, model_name, False, train_d, val_d, device, True, False)
         if what_to_do == WhatUWannaDoNow.TUNE_HYPERPARAMS:
             tune_hyperparameter(word_to_ixs, model_name, train_d, val_d, device)
         if what_to_do == WhatUWannaDoNow.VISUALIZE_MODELS:

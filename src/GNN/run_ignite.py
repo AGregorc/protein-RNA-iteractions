@@ -124,7 +124,7 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
     if optimizer is None:
         # create the optimizer
         optimizer = torch.optim.Adagrad(model.parameters(),
-                                        lr=0.09,
+                                        lr=0.01,
                                         weight_decay=1e-4)
     if criterion is None:
         criterion = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 7.0], device=device))
