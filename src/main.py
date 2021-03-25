@@ -1,22 +1,31 @@
 import copy
+import os
 
 import torch
 import torch.nn as nn
 
-from Constants import NODE_FEATURES_NUM
-from Data.Data import get_dataset, save_dataset
+from Constants import NODE_FEATURES_NUM, DATA_PATH
+from Data.Data import get_dataset, save_dataset, load_individuals
 from Data.Evaluate import calculate_metrics, majority_model_metrics, dataset_info, feature_importance
 from Data.PlotMPL import plot_training_history, visualize_model
+from Data.load_data import load_preprocessed_data
 from GNN.MyModels import MyModels
 from GNN.run_ignite import run
 from split_dataset import get_train_val_test_data
 
 
-def data(limit=1424, save=False, test=False):
-    dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit, individual=True)
+def data(limit=1424, test=False):
 
-    if save:
-        save_dataset(dataset, dataset_filenames, word_to_ixs, *standardize, limit=limit)
+    pdbs = []
+    with open(os.path.join(DATA_PATH, 'pdbs.lst')) as f:
+        i = 0
+        for pdb in f:
+            pdbs.append(pdb.strip())
+            i += 1
+            if limit is not None and i >= limit:
+                break
+
+    dataset, dataset_filenames, word_to_ixs = load_individuals(pdbs)
 
     train_d, train_f, val_d, val_f, test_d, test_f = get_train_val_test_data(dataset, dataset_filenames)
     dataset_info(train_d, val_d, test_d)
@@ -93,7 +102,7 @@ def main():
         VISUALIZE_METRICS = 3
         FEATURE_IMPORTANCE = 4
 
-    data_limit = 1424
+    data_limit = None
     model_names = [
                    'two_branches_small',
                    'two_branches']
@@ -101,7 +110,7 @@ def main():
     what_to_do = WhatUWannaDoNow.VISUALIZE_METRICS
     metrics = True
 
-    train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
+    train_d, train_f, val_d, val_f, word_to_ixs = data(limit=data_limit)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Number of features {NODE_FEATURES_NUM}, device {device}')
 

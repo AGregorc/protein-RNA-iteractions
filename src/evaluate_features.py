@@ -17,7 +17,7 @@ def train_ignore_features():
     model_name = 'first_linear_then_more_GraphConvs_then_linear'
     predict_type = 'y_combine_all_percent'
 
-    train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit, save=False)
+    train_d, train_f, val_d, val_f, word_to_ixs = data(data_limit)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Number of features', NODE_FEATURES_NUM)
     x_list = list(range(NODE_FEATURES_NUM))

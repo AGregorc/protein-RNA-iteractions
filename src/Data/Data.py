@@ -217,6 +217,21 @@ def save_dataset(dataset, dataset_filenames, word_to_ixs, mean, std, filename=No
     save_feat_word_to_ixs(filename_wti, word_to_ixs)
 
 
+def load_individuals(pdbs):
+    filenames = listdir(Constants.SAVED_GRAPH_PATH)
+    dataset = []
+    dataset_filenames = []
+    for fn in filenames:
+        if os.path.splitext(fn)[0] in pdbs:
+            graph = load_graphs(os.path.join(Constants.SAVED_GRAPH_PATH, fn))
+            graph = graph[0][0]
+            dataset.append(graph)
+            dataset_filenames.append(os.path.splitext(fn)[0])
+
+    word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
+    return dataset, dataset_filenames, word_to_ixs
+
+
 def load_dataset(filename=None, limit=None, individual=True):
     if filename is None:
         filename = file_name(limit=limit)
@@ -233,7 +248,7 @@ def load_dataset(filename=None, limit=None, individual=True):
             dataset.append(graph)
             dataset_filenames.append(os.path.splitext(fn)[0])
             i += 1
-            if i >= limit:
+            if limit is not None and i >= limit:
                 break
     else:
         dataset = load_graphs(filename)
