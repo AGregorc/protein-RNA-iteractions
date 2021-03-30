@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-base-ubuntu16.04
+FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
 # Install some basic utilities
 RUN apt-get update && apt-get install -y \
@@ -10,43 +10,38 @@ RUN apt-get update && apt-get install -y \
     libx11-6 \
  && rm -rf /var/lib/apt/lists/*
 
+# install anaconda
+RUN apt-get update
+RUN apt-get install -y wget bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
+        apt-get clean
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh -O ~/anaconda.sh && \
+        /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+        rm ~/anaconda.sh && \
+        ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+        echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+        find /opt/conda/ -follow -type f -name '*.a' -delete && \
+        find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+        /opt/conda/bin/conda clean -afy
+
+
+# set path to conda
+ENV PATH /opt/conda/bin:$PATH
+
+
+# install from requirements.txt
+RUN conda update conda \
+    && conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
+
+
 # Create a working directory
 RUN mkdir /app
 WORKDIR /app
 
-# Create a non-root user and switch to it
-#RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
-# && chown -R user:user /app
-#RUN echo "user ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-user
-#USER user
-
-# All users can use /home/user as their home directory
-#ENV HOME=/home/user
-#RUN chmod 777 /home/user
-
-# Install Miniconda and Python 3.6
-ENV CONDA_AUTO_UPDATE_CONDA=false
-ENV PATH=/home/user/miniconda/bin:$PATH
-RUN curl -sLo ~/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-4.7.12.1-Linux-x86_64.sh \
- && chmod +x ~/miniconda.sh \
- && ~/miniconda.sh -b -p ~/miniconda \
- && rm ~/miniconda.sh \
- && conda install -y python==3.6.9 \
- && conda clean -ya
-
-# CUDA 10.1-specific steps
-RUN conda install -y -c pytorch \
-    cudatoolkit=10.1 \
-    "pytorch=1.4.0=py3.6_cuda10.1.243_cudnn7.6.3_0" \
-    "torchvision=0.5.0=py36_cu101" \
- && conda clean -ya
-
-# install from requirements.txt
-RUN conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
-
+# Copy the code
+COPY . .
 
 # Change workdir to flask directory
 WORKDIR /app/src/web/flask
 
-# Set the default command to python3
+# Run the API server using uwsgi
 CMD ["uwsgi --ini uwsgi.ini"]

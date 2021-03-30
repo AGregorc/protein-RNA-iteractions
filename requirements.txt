@@ -11,8 +11,9 @@ schedule
 tqdm
 scikit-learn
 scipy
-dgl-cuda10.1==0.4.3
 
+cudatoolkit=10.1
+dgl-cuda10.1==0.4.3
 pytorch==1.4.0
 torchvision
 ignite==0.4.2
