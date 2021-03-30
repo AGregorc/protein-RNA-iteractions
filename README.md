@@ -1,5 +1,7 @@
 # Modeling protein-RNA interactions with GCNN
 
+[![Build Status](https://travis-ci.org/AGregorc/protein-RNA-iteractions.svg?branch=master)](https://travis-ci.org/AGregorc/protein-RNA-iteractions)
+
  ... *description* ...
 
 
