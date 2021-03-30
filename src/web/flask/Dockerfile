@@ -28,17 +28,16 @@ RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_6
 ENV PATH /opt/conda/bin:$PATH
 
 
-# install from requirements.txt
-RUN conda update conda \
-    && conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
-
-
 # Create a working directory
 RUN mkdir /app
 WORKDIR /app
 
 # Copy the code
 COPY . .
+
+# install from requirements.txt
+RUN conda update conda \
+    && conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
 
 # Change workdir to flask directory
 WORKDIR /app/src/web/flask
