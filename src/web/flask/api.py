@@ -29,9 +29,9 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 # dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
 # del dataset
 
-# word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
-word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
-                                                 'graph_data_1424_all_atoms_word_to_ix'))
+word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
+#word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
+#                                                 'graph_data_1424_all_atoms_word_to_ix'))
 dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_GRAPH_PATH)]
 parser = PDBParser()
 

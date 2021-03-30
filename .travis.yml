@@ -1,0 +1,23 @@
+sudo: true
+dist: trusty
+
+
+services:
+  - docker
+
+
+language: python
+python:
+  - "3.8"
+
+
+env:
+  - DOCKER_IMAGE_API=agregorc/protein-rna-interactions-api:0.0.1
+  - DOCKER_IMAGE_WEB_APP=agregorc/protein-rna-interactions-web-app:0.0.1
+
+script:
+  - docker build -t "$DOCKER_IMAGE_WEB_APP" src/web/flask
+  - docker build -t "$DOCKER_IMAGE_API" src/web/flask
+
+after_success:
+  - echo "after_success command"

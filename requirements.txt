@@ -1,12 +1,13 @@
 ####################################################################
 # Requirements for anaconda environment
 # Run it with:
-# conda install --file requirements.txt -c pytorch -c dglteam
+# conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
 ####################################################################
 
 biopython==1.76
 matplotlib
 numpy
+schedule
 tqdm
 scikit-learn
 scipy
@@ -20,3 +21,4 @@ captum
 Flask==1.1.2
 flask-cors
 requests
+uwsgi
