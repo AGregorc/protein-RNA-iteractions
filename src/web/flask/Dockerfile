@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
+FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
 
 # Install some basic utilities
 RUN apt-get update && apt-get install -y \
@@ -10,23 +10,6 @@ RUN apt-get update && apt-get install -y \
     libx11-6 \
  && rm -rf /var/lib/apt/lists/*
 
-# install anaconda
-RUN apt-get update
-RUN apt-get install -y wget bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
-        apt-get clean
-RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh -O ~/anaconda.sh && \
-        /bin/bash ~/anaconda.sh -b -p /opt/conda && \
-        rm ~/anaconda.sh && \
-        ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
-        echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
-        find /opt/conda/ -follow -type f -name '*.a' -delete && \
-        find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
-        /opt/conda/bin/conda clean -afy
-
-
-# set path to conda
-ENV PATH /opt/conda/bin:$PATH
-
 
 # Create a working directory
 RUN mkdir /app
@@ -37,10 +20,12 @@ COPY . .
 
 # install from requirements.txt
 RUN conda update conda \
-    && conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
+    && conda install --file requirements-cpu.txt -c pytorch -c dglteam -c conda-forge -y
 
-# Change workdir to flask directory
+ENV DGLBACKEND=pytorch
+
 WORKDIR /app/src/web/flask
 
+RUN chmod +x ./start.sh
 # Run the API server using uwsgi
-CMD ["uwsgi --ini uwsgi.ini"]
+CMD ["./start.sh"]

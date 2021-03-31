@@ -42,6 +42,7 @@ predict_type = 'y_combine_all_smooth_percent'
 my_models = MyModels(word_to_ixs)
 net, loss, thresholds = my_models.load_models(model_name, device)
 threshold = thresholds[predict_type]
+#net, loss, threshold = None, None, None
 print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
 
 
