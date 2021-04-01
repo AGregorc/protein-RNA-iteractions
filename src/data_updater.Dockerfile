@@ -29,7 +29,9 @@ RUN mkdir /tmp_msms \
     && sudo mkdir /usr/local/lib/msms \
     && cd /usr/local/lib/msms \
     && tar zxvf /tmp_msms/msms.tar.gz  \
-    && rm -rf /tmp_msms*
+    && rm -rf /tmp_msms* \
+    && sudo ln -s /usr/local/lib/msms/msms.x86_64Linux2.2.6.1 /usr/local/bin/msms \
+    && sudo ln -s /usr/local/lib/msms/pdb_to_xyzr* /usr/local/bin
 
 ENV DGLBACKEND=pytorch
 
