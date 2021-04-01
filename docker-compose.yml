@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  api:
+    image: agregorc/protein-rna-interactions-api:0.0.1 
+    ports:
+      - "5004:5000"
+    volumes:
+      - .:/app
+    environment:
+      FLASK_ENV: development
+      NUM_PROCESSES: 2
+  data-updater:
+    image: agregorc/protein-rna-interactions-data-updater:0.0.1
+    volumes:
+      - .:/app
+  web-app:
+    image: agregorc/protein-rna-interactions-web-app:0.0.1
+    ports: 
+      - "8080:8080"
+    environment:
+      API_URL: api:5000/api/

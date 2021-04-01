@@ -1,5 +1,8 @@
 dist: trusty
 
+branches:
+  only:
+  - master
 
 services:
   - docker
@@ -9,12 +12,14 @@ env:
     - VERSION=0.0.1
     - DOCKER_IMAGE_API=agregorc/protein-rna-interactions-api:$VERSION
     - DOCKER_IMAGE_WEB_APP=agregorc/protein-rna-interactions-web-app:$VERSION
+    - DOCKER_IMAGE_DATA_UPDATER=agregorc/protein-rna-interactions-data-updater:$VERSION
 
 script:
   - docker build -t $DOCKER_IMAGE_WEB_APP src/web/vue-app
 
-  # Build api image from flask dockerfile but in root directory
+  # Build next images from dockerfile in a root directory
   - docker build -t $DOCKER_IMAGE_API -f src/web/flask/Dockerfile .
+  - docker build -t $DOCKER_IMAGE_DATA_UPDATER -f src/data_updater.Dockerfile .
 
 after_success:
   - echo "after_success command"
