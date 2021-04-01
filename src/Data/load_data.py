@@ -195,7 +195,7 @@ def load_data(start_pdb=0, limit=None):
     load_from_list(all_pdbs)
 
 
-def update_pdbs_list_and_load(query):
+def update_pdbs_list_and_load(query, limit=None):
     pdbs = []
     with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst')) as f:
         for pdb in f:
@@ -216,9 +216,11 @@ def update_pdbs_list_and_load(query):
                 if curr_pdb not in pdbs:
                     new_pdbs.append(curr_pdb)
             start_row += QUERY_ROWS
-            if len(result) < QUERY_ROWS:
+            if len(result) < QUERY_ROWS or (limit is not None and start_row >= limit):
                 break
 
+        if limit is not None:
+            new_pdbs = new_pdbs[:limit]
         load_from_list(new_pdbs)
     except:
         return False

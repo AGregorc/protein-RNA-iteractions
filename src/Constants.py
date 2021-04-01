@@ -14,7 +14,8 @@ DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
 MODELS_PATH = os.path.join(DATA_PATH, 'models')
 TMP_PATH = os.path.join(DATA_PATH, 'tmp')
 GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
-NUM_PROCESSES = 12
+# TODO: change 2 to 12
+NUM_PROCESSES = os.getenv('NUM_PROCESSES', 2)
 
 if not os.path.exists(DATA_PATH):
     os.makedirs(DATA_PATH)
@@ -34,6 +35,10 @@ if not os.path.exists(TMP_PATH):
 
 TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
 PDB_ERROR_LIST = os.path.join(DATA_PATH, 'pdb_error_list.lst')
+
+# Create file if it doesn't exists
+open(TRAIN_VAL_TEST_SPLIT_FILE_PATH, 'a').close()
+open(PDB_ERROR_LIST, 'a').close()
 
 
 def set_model_directory(model_name):

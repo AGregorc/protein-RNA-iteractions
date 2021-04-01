@@ -18,7 +18,7 @@ def create_graph_sample(model_structure, word_to_ixs, lock, save=False):
     # end = time.time()
     # print(f'label_protein_rna_interactions: {end - start}')
     # start = end
-    surface = get_surface(protein_chains, MSMS=os.path.join(os.path.abspath(os.path.dirname(__file__)), 'msms'))
+    surface = get_surface(protein_chains, MSMS='msms')
     # end = time.time()
     # print(f'get_surface: {end - start}')
     # start = end
