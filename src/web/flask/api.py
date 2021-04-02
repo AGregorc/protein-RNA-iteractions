@@ -36,7 +36,7 @@ dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_
 parser = PDBParser()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_name = 'first_linear_then_more_GraphConvs_then_linear'
+model_name = 'two_branches_small'
 predict_type = 'y_combine_all_smooth_percent'
 
 my_models = MyModels(word_to_ixs)
