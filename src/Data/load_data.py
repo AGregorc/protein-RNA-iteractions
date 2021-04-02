@@ -12,25 +12,25 @@ DSSP_REST_URL = 'https://www3.cmbi.umcn.nl/xssp/'
 QUERY_ROWS = 10000
 
 ALL_PROTEINS_QUERY = 'https://search.rcsb.org/rcsbsearch/v1/query?json=%7B%22query%22%3A%7B%22type%22%3A%22group%22%2C%22logical_operator%22%3A%22and%22%2C' \
-'%22nodes%22%3A%5B%7B%22type%22%3A%22group%22%2C%22logical_operator%22%3A%22and%22%2C%22nodes%22%3A%5B%7B%22type%22' \
-'%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22greater%22%2C%22negation' \
-'%22%3Afalse%2C%22value%22%3A0%2C%22attribute%22%3A%22rcsb_entry_info.polymer_entity_count_protein%22%7D%7D%2C%7B' \
-'%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22less%22%2C' \
-'%22negation%22%3Afalse%2C%22value%22%3A62%2C%22attribute%22%3A%22rcsb_entry_info' \
-'.deposited_polymer_entity_instance_count%22%7D%7D%5D%7D%2C%7B%22type%22%3A%22group%22%2C%22logical_operator%22%3A' \
-'%22or%22%2C%22nodes%22%3A%5B%7B%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B' \
-'%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B1%2C1.5%5D%2C%22attribute%22%3A' \
-'%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C' \
-'%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B1.5%2C2%5D%2C' \
-'%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C%22service%22' \
-'%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B2%2C2' \
-'.5%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C' \
-'%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value' \
-'%22%3A%5B2.5%2C3%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A' \
-'%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22' \
-'%3Afalse%2C%22value%22%3A%5B3%2C3.5%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%5D%7D%5D' \
-'%7D%2C%22return_type%22%3A%22entry%22%2C%22request_options%22%3A%7B%22pager%22%3A%7B%22start%22%3A{}%2C%22rows%22' \
-'%3A'+str(QUERY_ROWS)+'%7D%7D%7D'
+                     '%22nodes%22%3A%5B%7B%22type%22%3A%22group%22%2C%22logical_operator%22%3A%22and%22%2C%22nodes%22%3A%5B%7B%22type%22' \
+                     '%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22greater%22%2C%22negation' \
+                     '%22%3Afalse%2C%22value%22%3A0%2C%22attribute%22%3A%22rcsb_entry_info.polymer_entity_count_protein%22%7D%7D%2C%7B' \
+                     '%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22less%22%2C' \
+                     '%22negation%22%3Afalse%2C%22value%22%3A62%2C%22attribute%22%3A%22rcsb_entry_info' \
+                     '.deposited_polymer_entity_instance_count%22%7D%7D%5D%7D%2C%7B%22type%22%3A%22group%22%2C%22logical_operator%22%3A' \
+                     '%22or%22%2C%22nodes%22%3A%5B%7B%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B' \
+                     '%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B1%2C1.5%5D%2C%22attribute%22%3A' \
+                     '%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C%22service%22%3A%22text%22%2C' \
+                     '%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B1.5%2C2%5D%2C' \
+                     '%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C%22service%22' \
+                     '%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value%22%3A%5B2%2C2' \
+                     '.5%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A%22terminal%22%2C' \
+                     '%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22%3Afalse%2C%22value' \
+                     '%22%3A%5B2.5%2C3%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%2C%7B%22type%22%3A' \
+                     '%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22%2C%22negation%22' \
+                     '%3Afalse%2C%22value%22%3A%5B3%2C3.5%5D%2C%22attribute%22%3A%22rcsb_entry_info.resolution_combined%22%7D%7D%5D%7D%5D' \
+                     '%7D%2C%22return_type%22%3A%22entry%22%2C%22request_options%22%3A%7B%22pager%22%3A%7B%22start%22%3A{}%2C%22rows%22' \
+                     '%3A' + str(QUERY_ROWS) + '%7D%7D%7D'
 
 RNA_PROTEIN_QUERY = 'https://search.rcsb.org/rcsbsearch/v1/query?json=%7B%22query%22%3A%7B%22type%22%3A%22group%22%2C' \
                     '%22logical_operator%22%3A%22and%22%2C%22nodes%22%3A%5B%7B%22type%22%3A%22group%22%2C' \
@@ -57,8 +57,7 @@ RNA_PROTEIN_QUERY = 'https://search.rcsb.org/rcsbsearch/v1/query?json=%7B%22quer
                     '%22terminal%22%2C%22service%22%3A%22text%22%2C%22parameters%22%3A%7B%22operator%22%3A%22range%22' \
                     '%2C%22negation%22%3Afalse%2C%22value%22%3A%5B3%2C3.5%5D%2C%22attribute%22%3A%22rcsb_entry_info' \
                     '.resolution_combined%22%7D%7D%5D%7D%5D%7D%2C%22return_type%22%3A%22entry%22%2C%22request_options' \
-                    '%22%3A%7B%22pager%22%3A%7B%22start%22%3A{}%2C%22rows%22%3A'+str(QUERY_ROWS)+'%7D%7D%7D '
-
+                    '%22%3A%7B%22pager%22%3A%7B%22start%22%3A{}%2C%22rows%22%3A' + str(QUERY_ROWS) + '%7D%7D%7D '
 
 PDB_DIR = Constants.PDB_PATH
 DSSP_DIR = Constants.DSSP_PATH
@@ -122,7 +121,7 @@ def pdb_to_dssp(pdb_file_path, rest_url):
         return result
 
 
-def load_from_list(pdb_list):
+def load_pdbs_from_list(pdb_list):
     for pdb in tqdm(pdb_list):
 
         # Load pdb file
@@ -192,43 +191,52 @@ def load_data(start_pdb=0, limit=None):
     else:
         all_pdbs = pdbs[start_pdb:start_pdb + limit]
 
-    load_from_list(all_pdbs)
+    load_pdbs_from_list(all_pdbs)
 
 
-def update_pdbs_list_and_load(query, limit=None):
-    pdbs = []
-    with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst')) as f:
-        for pdb in f:
-            pdbs.append(pdb.strip())
-
+def get_pdb_list(query, limit=None, ignore=None):
+    if ignore is None:
+        ignore = []
     new_pdbs = []
     start_row = 0
 
-    try:
-        while True:
-            print(f'Loading pdb ids from start row {start_row}')
-            url_result = query.format(start_row)
-            r = requests.get(url_result)
-            r.raise_for_status()
-            result = json.loads(r.text)['result_set']
-            for elem in result:
-                curr_pdb = elem['identifier'].lower()
-                if curr_pdb not in pdbs:
-                    new_pdbs.append(curr_pdb)
-            start_row += QUERY_ROWS
-            if len(result) < QUERY_ROWS or (limit is not None and start_row >= limit):
-                break
+    while True:
+        print(f'Loading pdb ids from start row {start_row}')
+        url_result = query.format(start_row)
+        r = requests.get(url_result)
+        r.raise_for_status()
+        result = json.loads(r.text)['result_set']
+        for elem in result:
+            curr_pdb = elem['identifier'].lower()
+            if curr_pdb not in ignore:
+                new_pdbs.append(curr_pdb)
+        start_row += QUERY_ROWS
+        if len(result) < QUERY_ROWS or (limit is not None and start_row >= limit):
+            break
 
-        if limit is not None:
-            new_pdbs = new_pdbs[:limit]
-        load_from_list(new_pdbs)
+    if limit is not None:
+        new_pdbs = new_pdbs[:limit]
+    return new_pdbs
+
+
+def update_pdbs_list_and_load(query, limit=None, filename='all_pdbs.lst', load_pdbs=True):
+    pdbs = []
+    with open(os.path.join(Constants.DATA_PATH, filename)) as f:
+        for pdb in f:
+            pdbs.append(pdb.strip())
+
+    try:
+        new_pdbs = get_pdb_list(query, limit, ignore=pdbs)
+
+        if load_pdbs:
+            load_pdbs_from_list(new_pdbs)
     except:
         return False
     else:
         # If loading is successful then update pdb list file
         print(len(new_pdbs), len(pdbs))
 
-        with open(os.path.join(Constants.DATA_PATH, 'all_pdbs.lst'), 'w') as f:
+        with open(os.path.join(Constants.DATA_PATH, filename), 'w') as f:
             first = True
             for pdb in pdbs:
                 if first:

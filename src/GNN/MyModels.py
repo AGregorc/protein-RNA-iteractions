@@ -133,27 +133,11 @@ class MyModels:
         except FileNotFoundError:
             return None
 
-    def load_models(self, model_name, device):
+    def get_model(self, model_name, device, prefix=''):
+        path = join(Constants.MODELS_PATH, model_name)
+        best_file, best_loss = get_model_filename(path, prefix)
         model = copy.deepcopy(self.my_models[model_name])
         to_load = {'model': model}
-        # checkpoint_fp = "../data/models/best/best_model_364_loss=-0.3888.pt"
-        path = join(Constants.MODELS_PATH, model_name)
-        model_files = [f for f in listdir(path) if isfile(join(path, f)) and splitext(f)[1] == '.pt']
-        best_file = None
-        best_loss = 1000
-        for name in model_files:
-            loss = abs(float(name.split('=')[1][:-3]))
-            if loss <= best_loss:
-                best_loss = loss
-                best_file = name
-
-        # Rename old naming of the parameters.
-        def key_transformation(old_key):
-            old_key = old_key.replace('hidden_linear_layers', 'hidden_layers')
-            old_key = old_key.replace('hidden_conv_layers', 'hidden_layers')
-            return old_key
-
-        # rename_state_dict_keys(join(path, best_file), key_transformation, device)  -> produced weird predictions
 
         checkpoint = torch.load(join(path, best_file), map_location=device)
         Checkpoint.load_objects(to_load=to_load, checkpoint=checkpoint)
@@ -190,3 +174,17 @@ def rename_state_dict_keys(source, key_transformation, device, target=None):
         new_state_dict[new_key] = value
 
     torch.save(new_state_dict, target)
+
+
+def get_model_filename(path, prefix=''):
+    model_files = [f for f in listdir(path) if isfile(join(path, f)) and splitext(f)[1] == '.pt']
+    best_file = None
+    best_loss = 1000
+    for name in model_files:
+        if prefix not in name:
+            continue
+        loss = abs(float(name.split('=')[1][:-3]))
+        if loss <= best_loss:
+            best_loss = loss
+            best_file = name
+    return best_file, best_loss

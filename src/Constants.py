@@ -1,7 +1,7 @@
 import os
 from Data import groups
 
-DATA_API_URL = 'http://d12.biolab.si:7777/'
+DATA_API_URL = 'http://d12.biolab.si:5004/'
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
 DATA_PATH = os.path.join(ROOT_PATH, '..', 'data')
@@ -12,25 +12,26 @@ GRAPH_EXTENSION = '.bin'
 PDB_PATH = os.path.join(DATA_PATH, 'pdbs')
 DSSP_PATH = os.path.join(DATA_PATH, 'dssp')
 MODELS_PATH = os.path.join(DATA_PATH, 'models')
+UPDATED_MODELS_PATH = os.path.join(DATA_PATH, 'updated_models')
 TMP_PATH = os.path.join(DATA_PATH, 'tmp')
 GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
 # TODO: change 2 to 12
 NUM_PROCESSES = os.getenv('NUM_PROCESSES', 2)
 
-if not os.path.exists(DATA_PATH):
-    os.makedirs(DATA_PATH)
-if not os.path.exists(SAVED_GRAPHS_PATH):
-    os.makedirs(SAVED_GRAPHS_PATH)
-if not os.path.exists(SAVED_GRAPH_PATH):
-    os.makedirs(SAVED_GRAPH_PATH)
-if not os.path.exists(PDB_PATH):
-    os.makedirs(PDB_PATH)
-if not os.path.exists(DSSP_PATH):
-    os.makedirs(DSSP_PATH)
-if not os.path.exists(MODELS_PATH):
-    os.makedirs(MODELS_PATH)
-if not os.path.exists(TMP_PATH):
-    os.makedirs(TMP_PATH)
+
+def makedir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+makedir_if_not_exists(DATA_PATH)
+makedir_if_not_exists(SAVED_GRAPHS_PATH)
+makedir_if_not_exists(SAVED_GRAPH_PATH)
+makedir_if_not_exists(PDB_PATH)
+makedir_if_not_exists(DSSP_PATH)
+makedir_if_not_exists(MODELS_PATH)
+makedir_if_not_exists(UPDATED_MODELS_PATH)
+makedir_if_not_exists(TMP_PATH)
 
 
 TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
@@ -149,3 +150,6 @@ FEATURE_NAMES.append('dssp_o->hn_2.1')
 FEATURE_NAMES.append('dssp_o->hn_2.2')
 
 assert len(FEATURE_NAMES) == NODE_FEATURES_NUM
+
+BEST_MODEL = 'two_branches_small'
+DATE_FORMAT = '%d-%m-%Y'

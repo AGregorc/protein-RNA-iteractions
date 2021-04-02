@@ -3,11 +3,12 @@ import random
 import sys
 import time
 import warnings
+from os.path import splitext
 
 import torch
 from Bio.PDB import PDBParser
 from dgl.data import load_graphs
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, jsonify
 from flask_cors import CORS, cross_origin
 
 
@@ -36,11 +37,11 @@ dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_
 parser = PDBParser()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_name = 'two_branches_small'
+model_name = Constants.BEST_MODEL
 predict_type = 'y_combine_all_smooth_percent'
 
 my_models = MyModels(word_to_ixs)
-net, loss, thresholds = my_models.load_models(model_name, device)
+net, loss, thresholds = my_models.get_model(model_name, device)
 threshold = thresholds[predict_type]
 #net, loss, threshold = None, None, None
 print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
@@ -49,6 +50,19 @@ print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
+
+
+@app.route('/api/new_model', methods=['POST'])
+def new_model():
+    file = request.files['model']
+    fn = file.filename
+    print(fn)
+    if splitext(fn)[1] == '.pt':
+        file_path = os.path.join(Constants.UPDATED_MODELS_PATH, fn)
+        if not os.path.exists(file_path):
+            file.save(file_path)
+
+    return jsonify(success=True)
 
 
 @app.route('/api/preprocessed_file/<pdb_id>')
@@ -60,9 +74,7 @@ def send_preprocessed_pdb(pdb_id):
 
 @app.route('/api/list_all_pdbs')
 def list_all_pdbs():
-    return {
-        'all_pdbs': dataset_pdb_ids
-    }
+    return jsonify(all_pdbs=dataset_pdb_ids)
 
 
 @app.route('/api/get_predictions/<pdb_fn>')

@@ -99,8 +99,10 @@ def batcher(device):
 
 def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None,
         epochs=10, batch_size=1, log_interval=10,
-        model_name='unknown', log_dir=None, save=True, model_name_prefix=''):
+        model_name='unknown', log_dir=None, save=True, model_name_prefix='', path=None):
     start_time = time.time()
+    if path is None:
+        path = join(MODELS_PATH, model_name)
 
     # writer = None
     # if log_dir is not None and log_dir != '':
@@ -157,8 +159,8 @@ def run(model, dataset, val_dataset, device=None, optimizer=None, criterion=None
 
     to_save = {'model': model}
     if save:
-        handler = Checkpoint(to_save, DiskSaver(join(MODELS_PATH, model_name), create_dir=True, require_empty=False),
-                             n_saved=2, score_function=score_function, score_name="loss",
+        handler = Checkpoint(to_save, DiskSaver(path, create_dir=True, require_empty=False),
+                             n_saved=1, score_function=score_function, score_name="loss",
                              filename_prefix=model_name_prefix,
                              global_step_transform=global_step_from_engine(trainer))
 
