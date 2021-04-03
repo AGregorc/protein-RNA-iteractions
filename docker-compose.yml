@@ -9,10 +9,14 @@ services:
     environment:
       FLASK_ENV: development
       NUM_PROCESSES: 2
+      ADMIN_PASS: $ADMIN_PASS
   data-updater:
     image: agregorc/protein-rna-interactions-data-updater:0.0.1
     volumes:
       - .:/app
+    environment:
+      NUM_PROCESSES: 2
+      ADMIN_PASS: $ADMIN_PASS
   web-app:
     image: agregorc/protein-rna-interactions-web-app:0.0.1
     ports: 

@@ -9,6 +9,7 @@ import torch
 from Bio.PDB import PDBParser
 from dgl.data import load_graphs
 from flask import Flask, send_from_directory, request, jsonify
+from flask_basicauth import BasicAuth
 from flask_cors import CORS, cross_origin
 
 
@@ -25,13 +26,16 @@ app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 # app.config['CORS_HEADERS'] = 'Content-Type'
 
+app.config['BASIC_AUTH_USERNAME'] = 'admin'
+app.config['BASIC_AUTH_PASSWORD'] = os.getenv('ADMIN_PASS', 'pass')
+basic_auth = BasicAuth(app)
 
 # limit = 10
 # dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
 # del dataset
 
 word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
-#word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
+# word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
 #                                                 'graph_data_1424_all_atoms_word_to_ix'))
 dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_GRAPH_PATH)]
 parser = PDBParser()
@@ -43,7 +47,7 @@ predict_type = 'y_combine_all_smooth_percent'
 my_models = MyModels(word_to_ixs)
 net, loss, thresholds = my_models.get_model(model_name, device)
 threshold = thresholds[predict_type]
-#net, loss, threshold = None, None, None
+# net, loss, threshold = None, None, None
 print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
 
 
@@ -53,6 +57,7 @@ def hello_world():
 
 
 @app.route('/api/new_model', methods=['POST'])
+@basic_auth.required
 def new_model():
     file = request.files['model']
     fn = file.filename

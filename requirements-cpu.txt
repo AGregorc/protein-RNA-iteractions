@@ -20,5 +20,6 @@ captum
 
 Flask==1.1.2
 flask-cors
+flask-basicauth
 requests
 uwsgi

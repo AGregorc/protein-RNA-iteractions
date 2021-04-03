@@ -16,6 +16,7 @@ from GNN.run_ignite import run
 
 # TODO: change to None
 LIMIT = 5
+PASS = os.getenv('ADMIN_PASS', 'pass')
 
 
 def update_model(limit=LIMIT):
@@ -51,7 +52,7 @@ def update_model(limit=LIMIT):
     model_fn, loss = get_model_filename(Constants.UPDATED_MODELS_PATH, date_prefix)
     with open(os.path.join(Constants.UPDATED_MODELS_PATH, model_fn), 'rb') as f:
         try:
-            resp = requests.post('http://localhost:5004/api/new_model', files={'model': f})
+            resp = requests.post(Constants.DATA_API_URL + 'api/new_model', files={'model': f}, auth=('admin', PASS))
             if resp.status_code < 300:
                 print('Successfully sent model to API')
             else:
