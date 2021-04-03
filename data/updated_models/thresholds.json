@@ -1,0 +1,9 @@
+{
+  "y_pred": 0.99,
+  "y_interaction_percent": 0.5027958750724792,
+  "y_reverse_interaction_percent": 0.44578468799591064,
+  "y_combine_percent": 0.47431305050849915,
+  "y_pick_major_percent": 0.44578468799591064,
+  "y_combine_all_percent": 0.46482333540916443,
+  "y_combine_all_smooth_percent": 0.45609650015830994
+}

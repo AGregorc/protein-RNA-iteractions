@@ -17,7 +17,7 @@ sys.path.append(os.path.join(path, '..', '..'))
 
 import Constants
 from Data.Evaluate import predict_percent, print_metrics, _get, smooth_graph
-from GNN.MyModels import MyModels
+from GNN.MyModels import MyModels, list_models
 from Data.Preprocess import is_labeled_positive, is_protein, get_dgl_id, load_feat_word_to_ixs, get_protein_chains, \
     get_atoms_list
 
@@ -65,6 +65,13 @@ def new_model():
     return jsonify(success=True)
 
 
+@app.route('/api/list_models')
+def send_list_models():
+    models = list_models(Constants.UPDATED_MODELS_PATH)
+    models = list(map(lambda m: splitext(m)[0], models))
+    return jsonify(models=models)
+
+
 @app.route('/api/preprocessed_file/<pdb_id>')
 def send_preprocessed_pdb(pdb_id):
     if '.' in pdb_id:
@@ -82,6 +89,15 @@ def get_predictions(pdb_fn):
     if not pdb_fn.endswith('.pdb'):
         pdb_fn = pdb_fn + '.pdb'
     pdb_id = os.path.splitext(pdb_fn)[0]
+
+    model_tmp = request.args.get('model')
+    if model_tmp is None:
+        net_tmp = net
+    else:
+        date_prefix = model_tmp.split('_')[0]
+        # print(f'Change model to {date_prefix} -- {model_tmp}')
+        net_tmp, loss, _ = my_models.get_model(model_name, device, prefix=date_prefix, path=Constants.UPDATED_MODELS_PATH)
+        # print(f'loss: {loss}')
 
     start = time.time()
     print(f'Get predictions for {pdb_fn}')
@@ -106,7 +122,7 @@ def get_predictions(pdb_fn):
     t = time.time()
 
     atom_dict = {}
-    predictions = predict_percent(net, [graph], predict_type=predict_type)
+    predictions = predict_percent(net_tmp, [graph], predict_type=predict_type)
     predictions = smooth_graph(graph, predictions)
     # print(predictions)
     atoms = get_atoms_list(protein_chains)

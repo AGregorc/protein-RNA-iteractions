@@ -133,8 +133,9 @@ class MyModels:
         except FileNotFoundError:
             return None
 
-    def get_model(self, model_name, device, prefix=''):
-        path = join(Constants.MODELS_PATH, model_name)
+    def get_model(self, model_name, device, prefix='', path=None):
+        if path is None:
+            path = join(Constants.MODELS_PATH, model_name)
         best_file, best_loss = get_model_filename(path, prefix)
         model = copy.deepcopy(self.my_models[model_name])
         to_load = {'model': model}
@@ -188,3 +189,8 @@ def get_model_filename(path, prefix=''):
             best_loss = loss
             best_file = name
     return best_file, best_loss
+
+
+def list_models(path):
+    model_files = [f for f in listdir(path) if isfile(join(path, f)) and splitext(f)[1] == '.pt']
+    return model_files
