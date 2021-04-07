@@ -2,7 +2,8 @@ import copy
 import json
 from collections import OrderedDict
 from os import listdir
-from os.path import isfile, join, splitext
+from os.path import isfile, join, splitext, getmtime
+from pathlib import Path
 
 import torch
 from ignite.handlers import Checkpoint
@@ -191,6 +192,9 @@ def get_model_filename(path, prefix=''):
     return best_file, best_loss
 
 
-def list_models(path):
-    model_files = [f for f in listdir(path) if isfile(join(path, f)) and splitext(f)[1] == '.pt']
+def list_models(path, limit=None):
+    model_files = [f.name for f in sorted(Path(path).iterdir(), key=getmtime, reverse=True)
+                   if isfile(f) and splitext(f.name)[1] == '.pt']
+    if limit is not None:
+        model_files = model_files[:limit]
     return model_files

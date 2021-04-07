@@ -72,7 +72,7 @@ def new_model():
 
 @app.route('/api/list_models')
 def send_list_models():
-    models = list_models(Constants.UPDATED_MODELS_PATH)
+    models = list_models(Constants.UPDATED_MODELS_PATH, 6)
     models = list(map(lambda m: splitext(m)[0], models))
     return jsonify(models=models)
 
