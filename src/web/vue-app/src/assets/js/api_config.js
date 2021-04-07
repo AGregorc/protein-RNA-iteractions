@@ -3,6 +3,7 @@ let URL = process.env.API_URL || 'http://' + window.location.hostname + ':5004/a
 
 let GetPredictionsURL = URL + 'get_predictions/';
 let ListAllPdbsURL = URL + 'list_all_pdbs';
+let ListAllModelsURL = URL + 'list_models'
 
 console.log("API URL is " + URL);
 
@@ -11,4 +12,5 @@ export default {
     URL,
     GetPredictionsURL,
     ListAllPdbsURL,
+    ListAllModelsURL,
 }
