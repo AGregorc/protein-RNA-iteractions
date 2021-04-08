@@ -8,10 +8,14 @@ from Data.utils import is_first_week_of_month, schedule_every_monday_at
 
 # TODO: change to None
 LIMIT = 2
+RUN_AT_START = True
 
 
 def update_and_preprocess(limit=LIMIT):
-    if not is_first_week_of_month():
+    global RUN_AT_START
+    if RUN_AT_START:
+        RUN_AT_START = False
+    elif not is_first_week_of_month():
         return
 
     # Update dataset
@@ -27,4 +31,4 @@ def update_and_preprocess(limit=LIMIT):
 
 if __name__ == '__main__':
     print(f'Running update dataset process')
-    schedule_every_monday_at(update_and_preprocess, "00:00", True)
+    schedule_every_monday_at(update_and_preprocess, "00:00", RUN_AT_START)

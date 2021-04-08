@@ -17,7 +17,7 @@ UPDATED_MODELS_PATH = os.path.join(DATA_PATH, 'updated_models')
 TMP_PATH = os.path.join(DATA_PATH, 'tmp')
 GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
 # TODO: change 2 to 12
-NUM_PROCESSES = os.getenv('NUM_PROCESSES', 2)
+NUM_PROCESSES = int(os.getenv('NUM_PROCESSES', 2))
 
 
 def makedir_if_not_exists(path):

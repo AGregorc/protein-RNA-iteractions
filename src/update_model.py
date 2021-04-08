@@ -17,10 +17,14 @@ from GNN.run_ignite import run
 # TODO: change to None
 LIMIT = 5
 PASS = os.getenv('ADMIN_PASS', 'pass')
+RUN_AT_START = True
 
 
 def update_model(limit=LIMIT):
-    if not is_first_week_of_month():
+    global RUN_AT_START
+    if RUN_AT_START:
+        RUN_AT_START = False
+    elif not is_first_week_of_month():
         return
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     now = datetime.now()
@@ -63,4 +67,4 @@ def update_model(limit=LIMIT):
 
 if __name__ == '__main__':
     print(f'Running update dataset process')
-    schedule_every_monday_at(update_model, "01:00", True)
+    schedule_every_monday_at(update_model, "01:00", RUN_AT_START)
