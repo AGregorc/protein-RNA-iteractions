@@ -58,5 +58,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    plot_from_file('2ru2.pdb', lambda atom: None, load_feat_word_to_ixs(GENERAL_WORD_TO_IDX_PATH))
+    main()
+    # plot_from_file('2ru2.pdb', lambda atom: None, load_feat_word_to_ixs(GENERAL_WORD_TO_IDX_PATH))

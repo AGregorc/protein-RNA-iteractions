@@ -229,11 +229,13 @@ def plot_roc(fpr, tpr, roc_auc, threshold_idx, save=False, model_name='', append
     plt.close()
 
 
-def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='', appendix=''):
+def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='', appendix='', ylim=0.0):
     plt.figure()
     plt.hist(y_pred_percent[np.where(y_true == val)[0]], bins=100)
     plt.title(title + " " + appendix)
     plt.xlim([0.0, 1.0])
+    if ylim > 1:
+        plt.ylim([0.0, ylim])
     if save:
         plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + ' ' + title + '.png'))
     else:
@@ -242,7 +244,7 @@ def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='',
 
 
 def plot_positive_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
-    _pos_neg_hist(y_true, y_pred_percent, 1, 'Positive histogram', save, model_name, appendix)
+    _pos_neg_hist(y_true, y_pred_percent, 1, 'Positive histogram', save, model_name, appendix, ylim=19000)
 
 
 def plot_negative_hist(y_true, y_pred_percent, save=False, model_name='', appendix=''):
