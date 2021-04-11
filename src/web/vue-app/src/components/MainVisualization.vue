@@ -125,13 +125,18 @@ export default {
       .catch(this.errorProcess);
   },
   methods: {
-    resetValues() {
+    resetValues(callback) {
       this.pdb_text = ''
       this.is_model_visible = false;
-      this.predicitons = undefined;
+      this.predictions = undefined;
       this.curr_threshold = undefined;
       this.curr_th_text = '';
       this.is_loading = false;
+      viewer.removeAllModels();
+      this.$forceUpdate();
+      setTimeout(() => {
+        callback();
+      }, 300);
     },
     load() {
       this.is_loading = true;
@@ -145,10 +150,9 @@ export default {
           // console.log(response.data)
           if (!response.data.success) {
             let pdb_text = this.pdb_text;
-            this.resetValues();
-            setTimeout(() => {
+            this.resetValues(() => {
               alert('PDB ID ' + pdb_text + ' does not exist in our database.');
-            }, 200);
+            });
             return;
           }
           this.predictions = response.data.predictions;
@@ -206,8 +210,9 @@ export default {
       this.contract=this.contract.match(/^\d+\.?\d{0,2}/);
     },
     errorProcess(error) {
-      this.resetValues();
-      alert('Something got wrong when connecting to the server.');
+      this.resetValues(() => {
+        alert('Something got wrong when connecting to the server.');
+      });
       console.log(error);
     }
   }
