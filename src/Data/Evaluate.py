@@ -233,7 +233,7 @@ def _pos_neg_hist(y_true, y_pred_percent, val, title, save=False, model_name='',
     plt.figure()
     plt.hist(y_pred_percent[np.where(y_true == val)[0]], bins=100)
     plt.title(title + " " + appendix)
-    # plt.xlim([0.0, 1.0])
+    plt.xlim([0.0, 1.0])
     if save:
         plt.savefig(os.path.join(Constants.MODELS_PATH, model_name, appendix + ' ' + title + '.png'))
     else:

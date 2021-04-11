@@ -109,7 +109,8 @@ def get_predictions(pdb_fn):
     try:
         graph = load_graphs(os.path.join(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION))
         graph = graph[0][0]
-    except:
+    except Exception as e:
+        print(e, os.path.join(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION))
         return {
             'success': False,
         }

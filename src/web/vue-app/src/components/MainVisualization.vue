@@ -4,7 +4,7 @@
   <teleport to="#navigation">
     <div class="padding">
 
-      <img alt="Vue logo" src="@/assets/img/logo.png">
+      <img alt="Vue logo" id="logo" src="@/assets/img/logo.png">
 
       <form @submit.prevent>
         <div class="mb-3">
@@ -144,9 +144,10 @@ export default {
         .then(response => {
           // console.log(response.data)
           if (!response.data.success) {
+            let pdb_text = this.pdb_text;
             this.resetValues();
             setTimeout(() => {
-              alert('PDB ID ' + this.pdb_text + ' does not exist in our database.');
+              alert('PDB ID ' + pdb_text + ' does not exist in our database.');
             }, 200);
             return;
           }
@@ -214,6 +215,12 @@ export default {
 </script>
 
 <style scoped>
+
+  #logo {
+    /*width: 75%;*/
+    /*height: auto;*/
+    /*margin-bottom: 2em;*/
+  }
 
 .mol-container {
   width: 100%;
