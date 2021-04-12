@@ -500,8 +500,10 @@ def save_feat_word_to_ixs(filename, node_feat_word_to_ixs):
 
 def load_feat_word_to_ixs(filename):
     word_to_ixs = {}
-    with open(filename + '.json', 'r') as fp:
-        word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
+    fn = filename + '.json'
+    if os.path.exists(fn):
+        with open(fn, 'r') as fp:
+            word_to_ixs = {int(k): v for k, v in json.load(fp).items()}
     return word_to_ixs
 
 

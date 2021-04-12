@@ -56,6 +56,19 @@ if GET_ONLY_CA_ATOMS:
 else:
     ATOM_ATOM_DISTANCE = 1.7
 
+DEFAULT_ATOM_ATOM_DISTANCE = 1.7
+# Our default ATOM_ATOM_DISTANCE is 1.7
+# if it's not then rename saved graphs folder
+if ATOM_ATOM_DISTANCE != DEFAULT_ATOM_ATOM_DISTANCE:
+    SAVED_GRAPHS_PATH += '_' + str(ATOM_ATOM_DISTANCE)
+    print(SAVED_GRAPHS_PATH)
+    SAVED_GRAPH_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids')
+    GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
+    makedir_if_not_exists(SAVED_GRAPHS_PATH)
+    makedir_if_not_exists(SAVED_GRAPH_PATH)
+
+
+
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
 LABEL_ATOM_DISTANCE = 4.2

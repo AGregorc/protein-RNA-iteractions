@@ -49,6 +49,8 @@ def call_gc():
 
 def create_graph_process(args):
     my_filename, directory_path, word_to_ixs, lock, save = args
+    if not my_filename.endswith('.pdb'):
+        my_filename += '.pdb'
     start_time = time.time()
     try:
         # print(f'[{os.getpid()}] got something to work :O')
@@ -84,36 +86,39 @@ def standardize_graph_process(result):
     return filename, graph
 
 
-def update_dataset(directory_path=Constants.PDB_PATH, limit=None, save_individual=True):
-    directory = os.fsencode(directory_path)
+def update_dataset(pdb_list=None, directory_path=Constants.PDB_PATH, limit=None, save_individual=True):
     manager = Manager()
+    if pdb_list is None:
+        directory = os.fsencode(directory_path)
 
-    pdb_error_list = []
-    with open(Constants.PDB_ERROR_LIST) as f:
-        for pdb in f:
-            pdb = pdb.strip()
-            if len(pdb) > 0:
-                pdb_error_list.append(pdb)
+        pdb_error_list = []
+        with open(Constants.PDB_ERROR_LIST) as f:
+            for pdb in f:
+                pdb = pdb.strip()
+                if len(pdb) > 0:
+                    pdb_error_list.append(pdb)
 
-    idx = 0
-    # dataset_dict = {}
-    dataset_filenames = []
+        idx = 0
+        # dataset_dict = {}
+        dataset_filenames = []
 
-    for file in os.listdir(directory):
-        filename = os.fsdecode(file)
-        if filename.endswith(".pdb"):
-            # dataset_dict[filename] = idx
-            if save_individual:
-                fn = os.path.splitext(filename)[0]
-                if (not os.path.isfile(os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION))
-                        and filename not in pdb_error_list):
+        for file in os.listdir(directory):
+            filename = os.fsdecode(file)
+            if filename.endswith(".pdb"):
+                # dataset_dict[filename] = idx
+                if save_individual:
+                    fn = os.path.splitext(filename)[0]
+                    if (not os.path.isfile(os.path.join(Constants.SAVED_GRAPH_PATH, fn + Constants.GRAPH_EXTENSION))
+                            and filename not in pdb_error_list):
+                        dataset_filenames.append(filename)
+                        idx += 1
+                else:
                     dataset_filenames.append(filename)
                     idx += 1
-            else:
-                dataset_filenames.append(filename)
-                idx += 1
-        if limit is not None and idx >= limit:
-            break
+            if limit is not None and idx >= limit:
+                break
+    else:
+        dataset_filenames = pdb_list
 
     if save_individual:
         wti = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)

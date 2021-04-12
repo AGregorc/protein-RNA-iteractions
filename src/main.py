@@ -1,15 +1,18 @@
 import torch
 
 from Constants import NODE_FEATURES_NUM, GENERAL_WORD_TO_IDX_PATH
+from Data.Data import update_dataset
 from Data.Evaluate import majority_model_metrics
 from Data.PlotMPL import visualize_model, plot_from_file
 from Data.Preprocess import load_feat_word_to_ixs
-from Data.utils import data, train_load_model, tune_hyperparameter
+from Data.load_data import load_data_for_analysis
+from Data.utils import data, train_load_model, tune_hyperparameter, get_analysis_pdb_list
 from GNN.MyModels import MyModels
 
 
 def main():
     class WhatUWannaDoNow:
+        CREATE_DATASET = -1
         TRAIN = 0
         TUNE_HYPERPARAMS = 1
         VISUALIZE_MODELS = 2
@@ -23,6 +26,11 @@ def main():
     # model_names = 'two_branches_small'
     what_to_do = WhatUWannaDoNow.VISUALIZE_METRICS
     metrics = True
+
+    if what_to_do == WhatUWannaDoNow.CREATE_DATASET:
+        load_data_for_analysis(limit=data_limit)
+        update_dataset(pdb_list=get_analysis_pdb_list(limit=data_limit), limit=data_limit)
+        return
 
     train_d, train_f, val_d, val_f, word_to_ixs = data(limit=data_limit)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

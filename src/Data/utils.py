@@ -16,16 +16,25 @@ from GNN.run_ignite import run
 from split_dataset import get_train_val_test_data
 
 
-def data(limit=1424, test=False):
-
+def get_analysis_pdb_list(start_pdb=0, limit=None):
+    if start_pdb is None:
+        start_pdb = 0
     pdbs = []
     with open(os.path.join(DATA_PATH, 'pdbs.lst')) as f:
         i = 0
+        st = 0
         for pdb in f:
-            pdbs.append(pdb.strip())
+            if i >= start_pdb:
+                pdbs.append(pdb.strip())
+                st += 1
             i += 1
-            if limit is not None and i >= limit:
+            if limit is not None and st >= limit:
                 break
+    return pdbs
+
+
+def data(limit=1424, test=False):
+    pdbs = get_analysis_pdb_list(limit)
 
     dataset, dataset_filenames, word_to_ixs = load_individuals(pdbs)
 

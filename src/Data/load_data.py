@@ -6,6 +6,7 @@ import requests
 from tqdm import tqdm
 
 import Constants
+from Data.utils import get_analysis_pdb_list
 
 URL_RCSB = 'https://files.rcsb.org/view/'
 DSSP_REST_URL = 'https://www3.cmbi.umcn.nl/xssp/'
@@ -172,24 +173,13 @@ def load_preprocessed_data(pdb_list):
                 continue
 
 
-def load_data(start_pdb=0, limit=None):
+def load_data_for_analysis(start_pdb=0, limit=None):
     if not os.path.exists(PDB_DIR):
         os.makedirs(PDB_DIR)
     if not os.path.exists(DSSP_DIR):
         os.makedirs(DSSP_DIR)
 
-    pdbs = []
-    with open(os.path.join(Constants.DATA_PATH, 'pdbs.lst')) as f:
-        for pdb in f:
-            pdbs.append(pdb.strip())
-
-    print(f'Number of .pdbs: {len(pdbs)}, loading {limit} of them')
-
-    i = 0
-    if limit is None:
-        all_pdbs = pdbs[start_pdb:]
-    else:
-        all_pdbs = pdbs[start_pdb:start_pdb + limit]
+    all_pdbs = get_analysis_pdb_list(start_pdb, limit)
 
     load_pdbs_from_list(all_pdbs)
 
