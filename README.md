@@ -13,12 +13,12 @@ Clone the code
 git clone https://github.com/AGregorc/protein-RNA-iteractions.git
 ```
 
-Now there is an option to use anaconda or pip to install all the requirements.
+Next there is an option to use anaconda or pip to install all the requirements.
 The preferred one is using anaconda since it provides cudatoolkit.
 
 #### Using Anaconda
  
-Check conda installation guides. 
+Check anaconda installation guides.
 Here is just one example how to install miniconda on linux
 
 ```

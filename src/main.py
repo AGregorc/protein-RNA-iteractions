@@ -62,7 +62,7 @@ def main(what_to_do=WhatUWannaDoNow.VISUALIZE_METRICS):
         majority_model_metrics(val_d, save=True)
 
     # use_new_window()
-    # #
+    # # Plot pdb id with colors based on ground truth labels
     # plot_from_file(train_f[0],
     #                lambda atom: LABEL_POSITIVE_COLOR if is_labeled_positive(atom) else LABEL_NEGATIVE_COLOR,
     #                word_to_ixs, standardize=standardize)
