@@ -1,3 +1,5 @@
+import sys
+
 import torch
 
 from Constants import NODE_FEATURES_NUM, GENERAL_WORD_TO_IDX_PATH
@@ -10,21 +12,23 @@ from Data.utils import data, train_load_model, tune_hyperparameter, get_analysis
 from GNN.MyModels import MyModels
 
 
-def main():
-    class WhatUWannaDoNow:
-        CREATE_DATASET = -1
-        TRAIN = 0
-        TUNE_HYPERPARAMS = 1
-        VISUALIZE_MODELS = 2
-        VISUALIZE_METRICS = 3
-        FEATURE_IMPORTANCE = 4
+class WhatUWannaDoNow:
+    CREATE_DATASET = 'create'
+    TRAIN = 'train'
+    TUNE_HYPERPARAMS = 'tune'
+    VISUALIZE_MODELS = 'visualize_models'
+    VISUALIZE_METRICS = 'visualize_metrics'
+    FEATURE_IMPORTANCE = 'feature_importance'
 
+
+def main(what_to_do=WhatUWannaDoNow.VISUALIZE_METRICS):
     data_limit = None
-    model_names = [
-                   'two_branches_small',
-                   'two_branches']
-    # model_names = 'two_branches_small'
-    what_to_do = WhatUWannaDoNow.VISUALIZE_METRICS
+
+    # model names can be an array of model names or a string with name
+    # model_names = [
+    #                'two_branches_small',
+    #                'two_branches']
+    model_names = 'two_branches_small'
     metrics = True
 
     if what_to_do == WhatUWannaDoNow.CREATE_DATASET:
@@ -66,5 +70,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        to_do = sys.argv[1]
+        main(to_do)
+    else:
+        main()
     # plot_from_file('2ru2.pdb', lambda atom: None, load_feat_word_to_ixs(GENERAL_WORD_TO_IDX_PATH))
