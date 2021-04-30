@@ -33,7 +33,7 @@ conda activate torch
 ```
 Move to the protein-RNA-iteractions directory eg. `cd protein-RNA-iteractions` and then
 ```
-conda install --file requirements.txt -c pytorch -c dglteam
+conda install --file requirements.txt -c pytorch -c dglteam -c conda-forge
 ```
 
 # Usage 

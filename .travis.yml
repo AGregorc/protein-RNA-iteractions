@@ -25,3 +25,8 @@ script:
 
 after_success:
   - echo "after_success command"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker push $DOCKER_IMAGE_API
+  - docker push $DOCKER_IMAGE_DATA_UPDATER
+  - docker push $DOCKER_IMAGE_MODEL_UPDATER
+  - docker push $DOCKER_IMAGE_WEB_APP
