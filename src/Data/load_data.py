@@ -64,9 +64,9 @@ PDB_DIR = Constants.PDB_PATH
 DSSP_DIR = Constants.DSSP_PATH
 
 
-def pdb_to_dssp(pdb_file_path, rest_url):
+def pdb_to_dssp(path, filename, rest_url):
     # Read the pdb file data into a variable
-    files = {'file_': open(pdb_file_path, 'rb')}
+    files = {'file_': Constants.open_data_file(path, filename).read()}
 
     # Send a request to the server to create dssp data from the pdb file data.
     # If an error occurs, an exception is raised and the program exits. If the
@@ -127,12 +127,12 @@ def load_pdbs_from_list(pdb_list):
 
         # Load pdb file
         pdb_filename = f'{pdb}.pdb'
-        if not os.path.exists(os.path.join(PDB_DIR, pdb_filename)):
+        if not Constants.data_file_exists(PDB_DIR, pdb_filename):
             try:
                 r = requests.get(URL_RCSB + pdb_filename, allow_redirects=True, timeout=8)
                 # r.raise_for_status()
                 if r.status_code < 300:
-                    with open(os.path.join(PDB_DIR, pdb_filename), 'wb') as f:
+                    with Constants.open_data_file(PDB_DIR, pdb_filename, read=False) as f:
                         f.write(r.content)
                 else:
                     print(f"Error when loading pdb file {pdb} status {r.status_code}")
@@ -143,10 +143,10 @@ def load_pdbs_from_list(pdb_list):
 
         # Load dssp file
         dssp_filename = f'{pdb}.dssp'
-        if not os.path.exists(os.path.join(DSSP_DIR, dssp_filename)):
-            result = pdb_to_dssp(os.path.join(PDB_DIR, pdb_filename), DSSP_REST_URL)
+        if not Constants.data_file_exists(DSSP_DIR, dssp_filename):
+            result = pdb_to_dssp(PDB_DIR, pdb_filename, DSSP_REST_URL)
             if result is not False:
-                with open(os.path.join(DSSP_DIR, dssp_filename), 'w') as f:
+                with Constants.open_data_file(DSSP_DIR, dssp_filename, read=False) as f:
                     f.write(result)
             # print(f'{dssp_filename} added')
 
@@ -174,10 +174,8 @@ def load_preprocessed_data(pdb_list):
 
 
 def load_data_for_analysis(start_pdb=0, limit=None):
-    if not os.path.exists(PDB_DIR):
-        os.makedirs(PDB_DIR)
-    if not os.path.exists(DSSP_DIR):
-        os.makedirs(DSSP_DIR)
+    Constants.makedir_if_not_exists(PDB_DIR)
+    Constants.makedir_if_not_exists(DSSP_DIR)
 
     all_pdbs = get_analysis_pdb_list(start_pdb, limit)
 

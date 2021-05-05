@@ -2,11 +2,13 @@ import json
 import os
 import time
 from collections import deque
+from io import StringIO
 
 import dgl
 import numpy as np
 import torch
 from Bio.PDB import PPBuilder, NeighborSearch, get_surface, is_aa, calc_angle, Vector, make_dssp_dict
+from Bio.PDB.DSSP import _make_dssp_dict
 
 import Constants
 from Data.groups import a2gs
@@ -232,7 +234,10 @@ def num_of_atoms_above_plane(n, x, atoms):
 def generate_node_features(protein_chains, surface, ns: NeighborSearch, only_ca=Constants.GET_ONLY_CA_ATOMS):
     pdb_id = protein_chains[0].get_parent().full_id[0]
     pdb_id = pdb_id[-4:]
-    dssp = make_dssp_dict(os.path.join(Constants.DSSP_PATH,  pdb_id + '.dssp'))
+
+    with Constants.open_data_file(Constants.DSSP_PATH,  pdb_id + '.dssp') as f:
+        dssp_text = f.read()
+    dssp = _make_dssp_dict(StringIO(dssp_text))
     get_residues_t = dssp_key_t = min_dist_t = residue_depth_t = atom_d_t = settattr_t = 0
 
     for chain in protein_chains:

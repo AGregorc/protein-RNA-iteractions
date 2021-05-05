@@ -36,7 +36,7 @@ def main(what_to_do=WhatUWannaDoNow.VISUALIZE_METRICS):
         update_dataset(pdb_list=get_analysis_pdb_list(limit=data_limit), limit=data_limit)
         return
 
-    train_d, train_f, val_d, val_f, word_to_ixs = data(limit=data_limit)
+    train_d, train_ids, val_d, val_ids, word_to_ixs = data(limit=data_limit)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Number of features {NODE_FEATURES_NUM}, device {device}')
 
@@ -63,10 +63,10 @@ def main(what_to_do=WhatUWannaDoNow.VISUALIZE_METRICS):
 
     # use_new_window()
     # # Plot pdb id with colors based on ground truth labels
-    # plot_from_file(train_f[0],
+    # plot_from_file(train_ids[0],
     #                lambda atom: LABEL_POSITIVE_COLOR if is_labeled_positive(atom) else LABEL_NEGATIVE_COLOR,
     #                word_to_ixs, standardize=standardize)
-    # plot_predicted(train_f[0], net, word_to_ixs, standardize=standardize)
+    # plot_predicted(train_ids[0], net, word_to_ixs, standardize=standardize)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import gzip
 import os
 from Data import groups
 
@@ -34,13 +35,53 @@ makedir_if_not_exists(MODELS_PATH)
 makedir_if_not_exists(UPDATED_MODELS_PATH)
 makedir_if_not_exists(TMP_PATH)
 
-
 TRAIN_VAL_TEST_SPLIT_FILE_PATH = os.path.join(DATA_PATH, 'train_val_test_split.json')
 PDB_ERROR_LIST = os.path.join(DATA_PATH, 'pdb_error_list.lst')
 
 # Create file if it doesn't exists
 open(TRAIN_VAL_TEST_SPLIT_FILE_PATH, 'a').close()
 open(PDB_ERROR_LIST, 'a').close()
+
+
+# Data file is either .pdb or .dssp and it should be opened with this function
+def open_data_file(path, filename, read=True):
+    if not filename.endswith(".gz"):
+        filename += ".gz"
+
+    mode = "rt"
+    # if ".bin" in filename:
+    #     mode = "rb"
+    if not read:
+        mode = "wt"
+        # if ".bin" in filename:
+        #     mode = "wb"
+
+    fn = os.path.join(path, filename)
+    return gzip.open(fn, mode)
+
+
+# Data file is either .pdb pr .dssp
+def data_file_exists(path, filename):
+    if not filename.endswith(".gz"):
+        filename += ".gz"
+    return os.path.exists(os.path.join(path, filename))
+
+
+def to_pdb_filename(pdb_id):
+    if len(pdb_id) == 4:
+        return pdb_id + '.pdb.gz'
+
+
+def is_pdb(filename):
+    return filename.endswith(".pdb") or filename.endswith(".pdb.gz")
+
+
+def is_dssp(filename):
+    return filename.endswith(".dssp") or filename.endswith(".dssp.gz")
+
+
+def filename_to_pdb_id(filename):
+    return filename.split(".")[0]
 
 
 def set_model_directory(model_name):
@@ -66,8 +107,6 @@ if ATOM_ATOM_DISTANCE != DEFAULT_ATOM_ATOM_DISTANCE:
     GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
     makedir_if_not_exists(SAVED_GRAPHS_PATH)
     makedir_if_not_exists(SAVED_GRAPH_PATH)
-
-
 
 ATOM_DGL_ID = 'my_dgl_id'
 LABEL_ATTRIBUTE_NAME = 'my_label'
@@ -133,7 +172,6 @@ EDGE_FEATURE_NAME = 'relative_position'
 EDGE_FEATURE_NUM = 0  # Ignoring edge features for now
 
 COORDINATES_GRAPH_NAME = 'coordinates'
-
 
 FEATURE_NAMES = [
     'mass',

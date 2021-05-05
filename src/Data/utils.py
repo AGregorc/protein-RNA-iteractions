@@ -36,16 +36,16 @@ def get_analysis_pdb_list(start_pdb=0, limit=None):
 def data(limit=1424, test=False):
     pdbs = get_analysis_pdb_list(limit)
 
-    dataset, dataset_filenames, word_to_ixs = load_individuals(pdbs)
+    dataset, dataset_pdb_ids, word_to_ixs = load_individuals(pdbs)
 
-    train_d, train_f, val_d, val_f, test_d, test_f = get_train_val_test_data(dataset, dataset_filenames)
+    train_d, train_ids, val_d, val_ids, test_d, test_ids = get_train_val_test_data(dataset, dataset_pdb_ids)
     dataset_info(train_d, val_d, test_d)
 
-    del dataset, dataset_filenames
+    del dataset, dataset_pdb_ids
     if test:
-        return train_d, train_f, test_d, test_f, word_to_ixs
+        return train_d, train_ids, test_d, test_ids, word_to_ixs
     else:
-        return train_d, train_f, val_d, val_f, word_to_ixs
+        return train_d, train_ids, val_d, val_ids, word_to_ixs
 
 
 def tune_hyperparameter(word_to_ixs, model_name, train_d, val_d, device, weights=None):

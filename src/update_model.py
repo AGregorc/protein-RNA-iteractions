@@ -36,9 +36,9 @@ def update_model(limit=LIMIT):
 
     # First load preprocessed data from api then get the dataset
     load_preprocessed_data(pdb_list)
-    dataset, dataset_filenames, word_to_ixs = load_individuals(pdb_list)
+    dataset, dataset_pdb_ids, word_to_ixs = load_individuals(pdb_list)
     print(f'len {len(dataset)}, {len(pdb_list)}, {limit}')
-    train_d, val_d, train_f, val_f = train_test_split(dataset, dataset_filenames, shuffle=True, test_size=0.5)
+    train_d, val_d, train_ids, val_ids = train_test_split(dataset, dataset_pdb_ids, shuffle=True, test_size=0.5)
 
     net = MyModels(word_to_ixs).my_models[Constants.BEST_MODEL]
     date_prefix = now.strftime(Constants.DATE_FORMAT)

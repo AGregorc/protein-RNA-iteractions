@@ -30,20 +30,13 @@ app.config['BASIC_AUTH_USERNAME'] = 'admin'
 app.config['BASIC_AUTH_PASSWORD'] = os.getenv('ADMIN_PASS', 'pass')
 basic_auth = BasicAuth(app)
 
-# limit = 10
-# dataset, dataset_filenames, word_to_ixs, standardize = get_dataset(limit=limit)
-# del dataset
-
-word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
-# word_to_ixs = load_feat_word_to_ixs(os.path.join(Constants.SAVED_GRAPHS_PATH,
-#                                                 'graph_data_1424_all_atoms_word_to_ix'))
-dataset_pdb_ids = [os.path.splitext(fn)[0] for fn in os.listdir(Constants.SAVED_GRAPH_PATH)]
 parser = PDBParser()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_name = Constants.BEST_MODEL
 predict_type = 'y_combine_all_smooth_percent'
 
+word_to_ixs = load_feat_word_to_ixs(Constants.GENERAL_WORD_TO_IDX_PATH)
 my_models = MyModels(word_to_ixs)
 net, loss, thresholds = my_models.get_model(model_name, device)
 threshold = thresholds[predict_type]
@@ -80,12 +73,13 @@ def send_list_models():
 @app.route('/api/preprocessed_file/<pdb_id>')
 def send_preprocessed_pdb(pdb_id):
     if '.' in pdb_id:
-        pdb_id = os.path.splitext(pdb_id)[0]
+        pdb_id = Constants.filename_to_pdb_id(pdb_id)
     return send_from_directory(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION)
 
 
 @app.route('/api/list_all_pdbs')
 def list_all_pdbs():
+    dataset_pdb_ids = [Constants.filename_to_pdb_id(fn) for fn in os.listdir(Constants.SAVED_GRAPH_PATH)]
     return jsonify(all_pdbs=dataset_pdb_ids)
 
 
@@ -93,7 +87,7 @@ def list_all_pdbs():
 def get_predictions(pdb_fn):
     if not pdb_fn.endswith('.pdb'):
         pdb_fn = pdb_fn + '.pdb'
-    pdb_id = os.path.splitext(pdb_fn)[0]
+    pdb_id = Constants.filename_to_pdb_id(pdb_fn)
 
     model_tmp = request.args.get('model')
     if model_tmp is None:
@@ -118,7 +112,7 @@ def get_predictions(pdb_fn):
     t = time.time()
     print(f'Preprocessed in {t - start}')
 
-    with open(os.path.join(Constants.PDB_PATH, pdb_fn), 'r') as f:
+    with Constants.open_data_file(Constants.PDB_PATH, pdb_fn) as f:
         pdb_file = f.read()
         f.seek(0)
         with warnings.catch_warnings(record=True):
