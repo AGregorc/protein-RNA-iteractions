@@ -23,3 +23,4 @@ flask-cors
 flask-basicauth
 requests
 uwsgi
+libiconv
