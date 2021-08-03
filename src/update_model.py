@@ -42,7 +42,7 @@ def update_model(limit=LIMIT, force_update=False, load_preprocessed=True):
         load_preprocessed_data(pdb_list)
 
     dataset, dataset_pdb_ids, word_to_ixs = load_individuals(pdb_list)
-    print(f'len {len(dataset)}, {len(pdb_list)}, {limit}')
+    print(f'len dataset: {len(dataset)}, pdb list: {len(pdb_list)}, limit: {limit}')
     train_d, val_d, train_ids, val_ids = train_test_split(dataset, dataset_pdb_ids, shuffle=True, test_size=0.5)
 
     net = MyModels(word_to_ixs).my_models[Constants.BEST_MODEL]

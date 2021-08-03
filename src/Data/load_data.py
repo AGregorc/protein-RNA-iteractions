@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import time
 import traceback
 
@@ -68,17 +69,26 @@ DSSP_DIR = Constants.DSSP_PATH
 def pdb_to_dssp(path, pdb_id, rest_url):
     # Read the pdb file data into a variable
     pdb_id = Constants.filename_to_pdb_id(pdb_id)
-    # files = {'file_': Constants.open_data_file(path, pdb_id)}
-    data = {'data': pdb_id}
+    pdb_filename = Constants.to_pdb_filename(pdb_id)
+
+    temp = tempfile.NamedTemporaryFile()
+    temp.name += ".pdb"
+    temp.write(str.encode(Constants.open_data_file(path, pdb_filename).read()))
+    temp.seek(0)
+    files = {'file_': temp}
+    # data = {'data': pdb_id} # they are missing a lot of pdb_id dssp files
 
     # Send a request to the server to create dssp data from the pdb file data.
     # If an error occurs, an exception is raised and the program exits. If the
     # request is successful, the id of the job running on the server is
     # returned.
-    url_create = '{}api/create/pdb_id/dssp/'.format(rest_url)
-    r = requests.post(url_create, data=data, timeout=30)
+    url_create = '{}api/create/pdb_file/dssp/'.format(rest_url)
+    r = requests.post(url_create, files=files, timeout=35)
 
-    job_id = json.loads(r.text)['id']
+    try:
+        job_id = json.loads(r.text)['id']
+    finally:
+        temp.close()
     # print("Job submitted successfully. Id is: '{}'".format(job_id))
 
     # Loop until the job running on the server has finished, either successfully
@@ -126,6 +136,7 @@ def pdb_to_dssp(path, pdb_id, rest_url):
 
 
 def load_pdbs_from_list(pdb_list):
+    print(f'Loading {len(pdb_list)} pdb and dssp files')
     for pdb in tqdm(pdb_list):
 
         # Load pdb file
