@@ -2,7 +2,7 @@ import gzip
 import os
 from Data import groups
 
-DATA_API_URL = 'http://d12.biolab.si:5004/'
+DATA_API_URL = 'http://193.2.72.56:5004/'
 # DATA_API_URL = 'http://localhost:5004/'
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -17,8 +17,8 @@ MODELS_PATH = os.path.join(DATA_PATH, 'models')
 UPDATED_MODELS_PATH = os.path.join(DATA_PATH, 'updated_models')
 TMP_PATH = os.path.join(DATA_PATH, 'tmp')
 GENERAL_WORD_TO_IDX_PATH = os.path.join(SAVED_GRAPHS_PATH, 'pdb_ids_word_to_ix')
-# TODO: change 2 to 12
-NUM_PROCESSES = int(os.getenv('NUM_PROCESSES', 2))
+# You can change this parameter
+NUM_PROCESSES = int(os.getenv('NUM_PROCESSES', 6))
 
 
 def makedir_if_not_exists(path):
