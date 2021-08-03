@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import traceback
 
 import requests
 from tqdm import tqdm
@@ -105,7 +106,7 @@ def pdb_to_dssp(path, filename, rest_url):
             ready = True
         elif status in ['FAILURE', 'REVOKED']:
             # raise Exception(json.loads(r.text)['message'])
-            print(f"Error when loading dssp file {pdb_file_path}")
+            print(f"Error when loading dssp file {filename}")
             return False
         else:
             time.sleep(1)
@@ -126,7 +127,7 @@ def load_pdbs_from_list(pdb_list):
     for pdb in tqdm(pdb_list):
 
         # Load pdb file
-        pdb_filename = f'{pdb}.pdb'
+        pdb_filename = Constants.to_pdb_filename(pdb)
         if not Constants.data_file_exists(PDB_DIR, pdb_filename):
             try:
                 r = requests.get(URL_RCSB + pdb_filename, allow_redirects=True, timeout=8)
@@ -142,7 +143,7 @@ def load_pdbs_from_list(pdb_list):
                 continue
 
         # Load dssp file
-        dssp_filename = f'{pdb}.dssp'
+        dssp_filename = Constants.to_dssp_filename(pdb)
         if not Constants.data_file_exists(DSSP_DIR, dssp_filename):
             result = pdb_to_dssp(PDB_DIR, pdb_filename, DSSP_REST_URL)
             if result is not False:
@@ -218,7 +219,9 @@ def update_pdbs_list_and_load(query, limit=None, filename='all_pdbs.lst', load_p
 
         if load_pdbs:
             load_pdbs_from_list(new_pdbs)
-    except:
+    except Exception as e:
+        print(f'Error on update_pdbs_list_and_load: {e}')
+        traceback.print_exc()
         return False
     else:
         # If loading is successful then update pdb list file

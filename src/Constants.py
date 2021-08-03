@@ -68,8 +68,13 @@ def data_file_exists(path, filename):
 
 
 def to_pdb_filename(pdb_id):
-    if len(pdb_id) == 4:
-        return pdb_id + '.pdb.gz'
+    pdb_id = filename_to_pdb_id(pdb_id)
+    return pdb_id + '.pdb.gz'
+
+
+def to_dssp_filename(pdb_id):
+    pdb_id = filename_to_pdb_id(pdb_id)
+    return pdb_id + '.dssp.gz'
 
 
 def is_pdb(filename):
