@@ -14,15 +14,18 @@ from Data.utils import schedule_every_monday_at, is_first_week_of_month
 from GNN.MyModels import MyModels, get_model_filename
 from GNN.run_ignite import run
 
-# TODO: change to None
-LIMIT = 5
+# change to number for debugging
+LIMIT = None
 PASS = os.getenv('ADMIN_PASS', 'pass')
 RUN_AT_START = True
 
 
-def update_model(limit=LIMIT):
+def update_model(limit=LIMIT, force_update=False, load_preprocessed=True):
     global RUN_AT_START
-    if RUN_AT_START:
+    if force_update:
+        # Move forward and update model
+        pass
+    elif RUN_AT_START:
         RUN_AT_START = False
     elif not is_first_week_of_month():
         return
@@ -34,8 +37,10 @@ def update_model(limit=LIMIT):
     pdb_list = get_pdb_list(query=RNA_PROTEIN_QUERY, limit=limit)
     print(f'Get pdb list done {time.time() - start}')
 
-    # First load preprocessed data from api then get the dataset
-    load_preprocessed_data(pdb_list)
+    if load_preprocessed:
+        # First load preprocessed data from api then get the dataset
+        load_preprocessed_data(pdb_list)
+
     dataset, dataset_pdb_ids, word_to_ixs = load_individuals(pdb_list)
     print(f'len {len(dataset)}, {len(pdb_list)}, {limit}')
     train_d, val_d, train_ids, val_ids = train_test_split(dataset, dataset_pdb_ids, shuffle=True, test_size=0.5)
