@@ -65,16 +65,18 @@ PDB_DIR = Constants.PDB_PATH
 DSSP_DIR = Constants.DSSP_PATH
 
 
-def pdb_to_dssp(path, filename, rest_url):
+def pdb_to_dssp(path, pdb_id, rest_url):
     # Read the pdb file data into a variable
-    files = {'file_': Constants.open_data_file(path, filename).read()}
+    pdb_id = Constants.filename_to_pdb_id(pdb_id)
+    # files = {'file_': Constants.open_data_file(path, pdb_id)}
+    data = {'data': pdb_id}
 
     # Send a request to the server to create dssp data from the pdb file data.
     # If an error occurs, an exception is raised and the program exits. If the
     # request is successful, the id of the job running on the server is
     # returned.
-    url_create = '{}api/create/pdb_file/dssp/'.format(rest_url)
-    r = requests.post(url_create, files=files, timeout=20)
+    url_create = '{}api/create/pdb_id/dssp/'.format(rest_url)
+    r = requests.post(url_create, data=data, timeout=30)
 
     job_id = json.loads(r.text)['id']
     # print("Job submitted successfully. Id is: '{}'".format(job_id))
@@ -106,7 +108,7 @@ def pdb_to_dssp(path, filename, rest_url):
             ready = True
         elif status in ['FAILURE', 'REVOKED']:
             # raise Exception(json.loads(r.text)['message'])
-            print(f"Error when loading dssp file {filename}")
+            print(f"Error when loading dssp file {pdb_id}")
             return False
         else:
             time.sleep(1)
@@ -127,25 +129,27 @@ def load_pdbs_from_list(pdb_list):
     for pdb in tqdm(pdb_list):
 
         # Load pdb file
+        pdb_id = Constants.filename_to_pdb_id(pdb)
         pdb_filename = Constants.to_pdb_filename(pdb)
         if not Constants.data_file_exists(PDB_DIR, pdb_filename):
             try:
-                r = requests.get(URL_RCSB + pdb_filename, allow_redirects=True, timeout=8)
+                r = requests.get(URL_RCSB + pdb_id + ".pdb", allow_redirects=True, timeout=8)
                 # r.raise_for_status()
                 if r.status_code < 300:
                     with Constants.open_data_file(PDB_DIR, pdb_filename, read=False) as f:
-                        f.write(r.content)
+                        f.write(r.text)
                 else:
                     print(f"Error when loading pdb file {pdb} status {r.status_code}")
                     continue
-                # print(f'{pdb_filename} added')
-            except:
+            except Exception as e:
+                print(f'Error on load_pdbs_from_list: {e}')
+                traceback.print_exc()
                 continue
 
         # Load dssp file
         dssp_filename = Constants.to_dssp_filename(pdb)
         if not Constants.data_file_exists(DSSP_DIR, dssp_filename):
-            result = pdb_to_dssp(PDB_DIR, pdb_filename, DSSP_REST_URL)
+            result = pdb_to_dssp(PDB_DIR, pdb_id, DSSP_REST_URL)
             if result is not False:
                 with Constants.open_data_file(DSSP_DIR, dssp_filename, read=False) as f:
                     f.write(result)
