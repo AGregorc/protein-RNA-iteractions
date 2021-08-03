@@ -49,8 +49,8 @@ def call_gc():
 
 def create_graph_process(args):
     my_filename, directory_path, word_to_ixs, lock, save = args
-    if not my_filename.endswith('.pdb'):
-        my_filename += '.pdb'
+    my_filename = Constants.to_pdb_filename(Constants.filename_to_pdb_id(my_filename))
+
     start_time = time.time()
     try:
         # print(f'[{os.getpid()}] got something to work :O')

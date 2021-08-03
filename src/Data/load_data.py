@@ -105,7 +105,7 @@ def pdb_to_dssp(path, filename, rest_url):
             ready = True
         elif status in ['FAILURE', 'REVOKED']:
             # raise Exception(json.loads(r.text)['message'])
-            print(f"Error when loading dssp file {pdb_file_path}")
+            print(f"Error when loading dssp file {filename}")
             return False
         else:
             time.sleep(1)
@@ -218,7 +218,8 @@ def update_pdbs_list_and_load(query, limit=None, filename='all_pdbs.lst', load_p
 
         if load_pdbs:
             load_pdbs_from_list(new_pdbs)
-    except:
+    except Exception as e:
+        print(f'Error on update_pdbs_list_and_load: {e}')
         return False
     else:
         # If loading is successful then update pdb list file
