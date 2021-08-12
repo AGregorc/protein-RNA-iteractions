@@ -1,6 +1,7 @@
 FROM node:lts-alpine
 
 ENV API_URL=$API_URL
+ENV VUE_APP_API_URL=$API_URL
 
 # install simple http server for serving static content
 RUN npm install -g http-server
