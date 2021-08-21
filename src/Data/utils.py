@@ -1,7 +1,7 @@
 import copy
-import datetime
 import os
 import time
+from datetime import datetime, date
 
 import torch
 from schedule import Scheduler
@@ -106,16 +106,24 @@ def train_load_model(my_models, model_name, do_train, train_d, val_d, device, ca
 
 
 def is_first_week_of_month():
-    day_of_month = datetime.datetime.now().day
+    day_of_month = datetime.now().day
     if day_of_month > 7:
         # not first day of month
         return False
     return True
 
 
-def schedule_every_monday_at(process, str_time, run_at_start=True):
+def is_midnight():
+    now = datetime.now()
+    seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+    return seconds_since_midnight <= 1
+
+
+def schedule_every_monday_at(process, str_time, run_at_start=True, second_process=None):
     scheduler1 = Scheduler()
     scheduler1.every().monday.at(str_time).do(process)
+    if second_process is not None:
+        scheduler1.every().friday.at(str_time).do(second_process)
 
     if run_at_start:
         # Run the job now
@@ -123,4 +131,6 @@ def schedule_every_monday_at(process, str_time, run_at_start=True):
 
     while True:
         scheduler1.run_pending()
+        if is_midnight():
+            print(f"Scheduler is working, today is {date.today()}")
         time.sleep(1)

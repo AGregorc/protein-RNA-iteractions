@@ -31,6 +31,7 @@ def update_model(limit=LIMIT, force_update=False, load_preprocessed=True):
         return
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     now = datetime.now()
+    print(f"\nStarting to update model {now}")
 
     # Update dataset
     start = time.time()
