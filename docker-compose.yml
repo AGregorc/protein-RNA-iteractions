@@ -1,18 +1,18 @@
 version: "3.9"
 services:
   api:
-    image: agregorc/protein-rna-interactions-api:0.0.1 
+    image: agregorc/protein-rna-interactions-api:0.0.2
     ports:
       - "5004:5000"
     volumes:
       - .:/app
     environment:
-      FLASK_ENV: development
+      FLASK_ENV: production
       NUM_PROCESSES: 2
       ADMIN_PASS: $ADMIN_PASS
       PYTHONUNBUFFERED: 1
   data-updater:
-    image: agregorc/protein-rna-interactions-data-updater:0.0.1
+    image: agregorc/protein-rna-interactions-data-updater:0.0.2
     volumes:
       - .:/app
     environment:
@@ -20,7 +20,7 @@ services:
       ADMIN_PASS: $ADMIN_PASS
       PYTHONUNBUFFERED: 1
   web-app:
-    image: agregorc/protein-rna-interactions-web-app:0.0.1
+    image: agregorc/protein-rna-interactions-web-app:0.0.2
     ports: 
       - "8080:8080"
     environment:
