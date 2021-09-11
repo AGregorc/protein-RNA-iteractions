@@ -4,13 +4,18 @@
 .idea/*
 
 data/preprocessed_data/*
+data/updated_models/*
 data/images/*
 data/plots/*
 data/models/*
 
 # all pdb and dssp files:
 *.pdb
+*.pdb.gz
 *.dssp
+*.dssp.gz
+
+data/pdb_error_list.lst
 
 
 # Created by .ignore support plugin (hsz.mobi)
