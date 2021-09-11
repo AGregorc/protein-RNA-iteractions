@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - 'master'
+
+env:
+  - VERSION=0.0.2
+  - DOCKER_IMAGE_API=agregorc/protein-rna-interactions-api:$VERSION
+  - DOCKER_IMAGE_WEB_APP=agregorc/protein-rna-interactions-web-app:$VERSION
+  - DOCKER_IMAGE_DATA_UPDATER=agregorc/protein-rna-interactions-data-updater:$VERSION
+  - DOCKER_IMAGE_MODEL_UPDATER=agregorc/protein-rna-interactions-model-updater:$VERSION
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build and push web api
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: src/web/flask/Dockerfile
+          push: true
+          tags: $DOCKER_IMAGE_API
+      -
+        name: Build and push data updater
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: src/data_updater.Dockerfile
+          push: true
+          tags: $DOCKER_IMAGE_DATA_UPDATER
+      -
+        name: Build and push model updater
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: src/model_updater.Dockerfile
+          push: true
+          tags: $DOCKER_IMAGE_MODEL_UPDATER
+      -
+        name: Build and push web app
+        uses: docker/build-push-action@v2
+        with:
+          context: src/web/vue-app
+          push: true
+          tags: $DOCKER_IMAGE_WEB_APP
