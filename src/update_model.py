@@ -59,14 +59,14 @@ def update_model(limit=LIMIT, force_update=False, load_preprocessed=True):
         criterion=criterion,
         batch_size=10,
         epochs=200,
-        path=Constants.UPDATED_MODELS_PATH,
+        path=Constants.TMP_MODELS_PATH,
         model_name_prefix=date_prefix,
     )
 
     del train_d, val_d
 
-    model_fn, loss = get_model_filename(Constants.UPDATED_MODELS_PATH, date_prefix)
-    with open(os.path.join(Constants.UPDATED_MODELS_PATH, model_fn), "rb") as f:
+    model_fn, loss = get_model_filename(Constants.TMP_MODELS_PATH, date_prefix)
+    with open(os.path.join(Constants.TMP_MODELS_PATH, model_fn), "rb") as f:
         try:
             resp = requests.post(
                 Constants.DATA_API_URL + "api/new_model",

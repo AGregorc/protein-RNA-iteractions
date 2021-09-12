@@ -22,6 +22,8 @@ from GNN.MyModels import MyModels, list_models
 from Data.Preprocess import is_labeled_positive, is_protein, get_dgl_id, load_feat_word_to_ixs, get_protein_chains, \
     get_atoms_list
 
+NUM_MODELS = 6
+
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 # app.config['CORS_HEADERS'] = 'Content-Type'
@@ -42,6 +44,21 @@ net, loss, thresholds = my_models.get_model(model_name, device)
 threshold = thresholds[predict_type]
 # net, loss, threshold = None, None, None
 print(f'Loaded model {model_name} with loss {loss} and threshold {threshold}.')
+net_dict = {}
+
+
+def load_models_dict():
+    global net_dict
+    net_dict = {}
+    models = list_models(Constants.UPDATED_MODELS_PATH, NUM_MODELS)
+    for model in models:
+        date_prefix = model.split('_')[0]
+        net_tmp, _, _ = my_models.get_model(model_name, device, prefix=date_prefix,
+                                               path=Constants.UPDATED_MODELS_PATH)
+        net_dict[date_prefix] = net_tmp
+
+
+load_models_dict()
 
 
 @app.route('/')
@@ -60,12 +77,13 @@ def new_model():
         if not os.path.exists(file_path):
             file.save(file_path)
 
+    load_models_dict()
     return jsonify(success=True)
 
 
 @app.route('/api/list_models')
 def send_list_models():
-    models = list_models(Constants.UPDATED_MODELS_PATH, 6)
+    models = list_models(Constants.UPDATED_MODELS_PATH, NUM_MODELS)
     models = list(map(lambda m: splitext(m)[0], models))
     return jsonify(models=models)
 
@@ -94,9 +112,10 @@ def get_predictions(pdb_fn):
         net_tmp = net
     else:
         date_prefix = model_tmp.split('_')[0]
-        # print(f'Change model to {date_prefix} -- {model_tmp}')
-        net_tmp, loss, _ = my_models.get_model(model_name, device, prefix=date_prefix, path=Constants.UPDATED_MODELS_PATH)
-        # print(f'loss: {loss}')
+        if date_prefix in net_dict:
+            net_tmp = net_dict[date_prefix]
+        else:
+            return jsonify(success=False)
 
     start = time.time()
     print(f'Get predictions for {pdb_fn}')
@@ -105,9 +124,7 @@ def get_predictions(pdb_fn):
         graph = graph[0][0]
     except Exception as e:
         print(e, os.path.join(Constants.SAVED_GRAPH_PATH, pdb_id + Constants.GRAPH_EXTENSION))
-        return {
-            'success': False,
-        }
+        return jsonify(success=False)
 
     t = time.time()
     print(f'Preprocessed in {t - start}')
